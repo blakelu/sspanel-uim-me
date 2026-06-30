@@ -102,7 +102,7 @@ final class PasswordController extends BaseController
 
     public function handleToken(ServerRequest $request, Response $response, array $args): ResponseInterface
     {
-        $token = $this->antiXss->xss_clean($request->getParam('token'));
+        $token = $this->antiXss->xss_clean($args['token']);
         $password = $request->getParam('password');
         $confirm_password = $request->getParam('confirm_password');
 
@@ -115,7 +115,7 @@ final class PasswordController extends BaseController
         }
 
         $redis = (new Cache())->initRedis();
-
+        
         try {
             $email = $redis->get('password_reset:' . $token);
             $redis->del('password_reset:' . $token);
@@ -128,14 +128,14 @@ final class PasswordController extends BaseController
         }
 
         $user = (new User())->where('email', $email)->first();
-
+        
         if ($user === null) {
             return ResponseHelper::error($response, '链接无效');
         }
         // reset password
         $hashPassword = Hash::passwordHash($password);
         $user->pass = $hashPassword;
-
+       
         if (! $user->save()) {
             return ResponseHelper::error($response, '重置失败，请重试');
         }

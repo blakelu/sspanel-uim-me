@@ -52,6 +52,7 @@ final class Hash
         };
     }
 
+    
     public static function sha256WithSalt($pwd): string
     {
         return hash('sha256', $pwd . $_ENV['salt']);
