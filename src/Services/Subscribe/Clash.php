@@ -163,6 +163,37 @@ final class Clash extends Base
                     ];
 
                     break;
+                case 15:
+                    $hysteria2_config = Hysteria2::getConfig($node_raw);
+                    $obfs = Hysteria2::getObfs($hysteria2_config);
+                    $obfs_password = Hysteria2::getObfsPassword($hysteria2_config);
+                    $up_mbps = (int) ($hysteria2_config['up_mbps'] ?? 0);
+                    $down_mbps = (int) ($hysteria2_config['down_mbps'] ?? 0);
+
+                    $node = [
+                        'name' => $node_raw->name,
+                        'type' => 'hysteria2',
+                        'server' => $node_raw->server,
+                        'port' => Hysteria2::getPort($hysteria2_config),
+                        'password' => $user->uuid,
+                        'sni' => Hysteria2::getSNI($node_raw, $hysteria2_config),
+                        'skip-cert-verify' => Hysteria2::isInsecure($hysteria2_config),
+                    ];
+
+                    if ($obfs !== '') {
+                        $node['obfs'] = $obfs;
+                        if ($obfs_password !== '') {
+                            $node['obfs-password'] = $obfs_password;
+                        }
+                    }
+                    if ($up_mbps > 0) {
+                        $node['up'] = $up_mbps . ' Mbps';
+                    }
+                    if ($down_mbps > 0) {
+                        $node['down'] = $down_mbps . ' Mbps';
+                    }
+
+                    break;
                 default:
                     $node = [];
                     break;

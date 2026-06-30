@@ -242,6 +242,9 @@
                                             客户端订阅（Trojan）：<code class="spoiler">{$UniversalSub}/trojan</code>
                                         </p>
                                         {/if}
+                                        <p>
+                                            客户端订阅（Hysteria2）：<code class="spoiler">{$UniversalSub}/hysteria2</code>
+                                        </p>
                                         <div class="btn-list justify-content-start">
                                             {if $public_setting['enable_ss_sub']}
                                             <a data-clipboard-text="{$UniversalSub}/ss"
@@ -265,6 +268,10 @@
                                                 复制客户端订阅（Trojan）
                                             </a>
                                             {/if}
+                                            <a data-clipboard-text="{$UniversalSub}/hysteria2"
+                                               class="copy btn btn-primary">
+                                                复制客户端订阅（Hysteria2）
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

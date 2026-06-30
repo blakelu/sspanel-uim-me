@@ -16,8 +16,8 @@ SSPanel-UIM is a PHP-based multi-purpose proxy service management system designe
 ## 特性 | Features
 
 ### 多协议支持 | Multi-Protocol Support
-- 支持 Shadowsocks 2022、V2Ray、Trojan、TUIC 等主流协议
-- Support for Shadowsocks 2022, V2Ray, Trojan, TUIC and other mainstream protocols
+- 支持 Shadowsocks 2022、V2Ray、Trojan、TUIC、Hysteria2 等主流协议
+- Support for Shadowsocks 2022, V2Ray, Trojan, TUIC, Hysteria2 and other mainstream protocols
 - 通用订阅接口，一键分发 json/clash/sip008/sing-box 格式订阅
 - Universal subscription interface, one-click json/clash/sip008/sing-box format subscription distribution
 
@@ -78,6 +78,8 @@ SSPanel-UIM is a PHP-based multi-purpose proxy service management system designe
 For complete installation and usage documentation, please visit:
 
 📚 [SSPanel-UIM 文档 | Documentation](https://docs.sspanel.io)
+
+Hysteria2 节点配置见 [Hysteria2 接入说明](docs/HYSTERIA2.md)。
 
 ## 社区 | Community
 

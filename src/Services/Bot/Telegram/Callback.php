@@ -756,6 +756,12 @@ final class Callback
             ],
             [
                 [
+                    'text' => 'Hysteria2',
+                    'callback_data' => 'user.subscribe|hysteria2',
+                ],
+            ],
+            [
+                [
                     'text' => '回主菜单',
                     'callback_data' => 'user.index',
                 ],
@@ -828,6 +834,8 @@ final class Callback
                     '<code>' . $UniversalSub_Url . '/v2ray</code>' . PHP_EOL . PHP_EOL,
                 'trojan' => 'Trojan 客户端订阅地址：' . PHP_EOL . PHP_EOL .
                     '<code>' . $UniversalSub_Url . '/trojan</code>' . PHP_EOL . PHP_EOL,
+                'hysteria2' => 'Hysteria2 客户端订阅地址：' . PHP_EOL . PHP_EOL .
+                    '<code>' . $UniversalSub_Url . '/hysteria2</code>' . PHP_EOL . PHP_EOL,
                 default => '未知参数' . PHP_EOL . PHP_EOL,
             };
 
