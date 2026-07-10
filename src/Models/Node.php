@@ -8,6 +8,9 @@ use App\Utils\Tools;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use function dns_get_record;
+use function is_array;
+use function json_decode;
+use function strtolower;
 use function time;
 use const DNS_A;
 use const DNS_AAAA;
@@ -85,11 +88,18 @@ final class Node extends Model
             1 => 'Shadowsocks2022',
             2 => 'TUIC',
             3 => 'WireGuard',
-            11 => 'Vmess',
+            11 => $this->usesVlessReality() ? 'VLESS Reality' : 'Vmess',
             14 => 'Trojan',
             15 => 'Hysteria2',
             default => '未知',
         };
+    }
+
+    private function usesVlessReality(): bool
+    {
+        $config = json_decode((string) $this->custom_config, true);
+
+        return is_array($config) && strtolower((string) ($config['protocol'] ?? '')) === 'vless';
     }
 
     public function isDynamicRate(): string

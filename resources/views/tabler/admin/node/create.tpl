@@ -60,7 +60,7 @@
                                     <select id="sort" class="col form-select">
                                         <option value="15">Hysteria2</option>
                                         <option value="14">Trojan</option>
-                                        <option value="11">Vmess</option>
+                                        <option value="11">Vmess / VLESS（自定义配置）</option>
                                         <option value="2">TUIC</option>
                                         <option value="1">Shadowsocks2022</option>
                                         <option value="0">Shadowsocks</option>

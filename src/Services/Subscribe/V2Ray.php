@@ -27,6 +27,14 @@ final class V2Ray extends Base
             $node_custom_config = json_decode($node_raw->custom_config, true);
 
             if ((int) $node_raw->sort === 11) {
+                if (VlessReality::isEnabled(VlessReality::getConfig($node_raw))) {
+                    $uri = VlessReality::buildURI($node_raw, $user);
+                    if ($uri !== '') {
+                        $links .= $uri . PHP_EOL;
+                    }
+                    continue;
+                }
+
                 $v2_port = $node_custom_config['offset_port_user'] ?? ($node_custom_config['offset_port_node'] ?? 443);
                 $security = $node_custom_config['security'] ?? 'none';
                 $network = $node_custom_config['network'] ?? '';

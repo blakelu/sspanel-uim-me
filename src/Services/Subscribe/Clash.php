@@ -93,6 +93,34 @@ final class Clash extends Base
 
                     break;
                 case 11:
+                    $vless_config = VlessReality::getConfig($node_raw);
+                    if (VlessReality::isEnabled($vless_config)) {
+                        if (! VlessReality::isConfigured($vless_config)) {
+                            $node = [];
+                            break;
+                        }
+
+                        $node = [
+                            'name' => $node_raw->name,
+                            'type' => 'vless',
+                            'server' => $node_raw->server,
+                            'port' => VlessReality::getPort($vless_config),
+                            'uuid' => $user->uuid,
+                            'network' => 'tcp',
+                            'tls' => true,
+                            'udp' => (bool) ($vless_config['udp'] ?? true),
+                            'flow' => VlessReality::getFlow($vless_config),
+                            'servername' => VlessReality::getServerName($vless_config),
+                            'client-fingerprint' => VlessReality::getFingerprint($vless_config),
+                            'reality-opts' => [
+                                'public-key' => VlessReality::getPublicKey($vless_config),
+                                'short-id' => VlessReality::getShortID($vless_config),
+                            ],
+                        ];
+
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ??
                         ($node_custom_config['offset_port_node'] ?? 443);
                     $security = $node_custom_config['security'] ?? 'none';

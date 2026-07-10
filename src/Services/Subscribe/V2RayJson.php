@@ -61,6 +61,40 @@ final class V2RayJson extends Base
 
                     break;
                 case 11:
+                    $vless_config = VlessReality::getConfig($node_raw);
+                    if (VlessReality::isEnabled($vless_config)) {
+                        if (! VlessReality::isConfigured($vless_config)) {
+                            $node = [];
+                            break;
+                        }
+
+                        $node = [
+                            'protocol' => 'vless',
+                            'settings' => [
+                                'address' => $node_raw->server,
+                                'port' => VlessReality::getPort($vless_config),
+                                'uuid' => $user->uuid,
+                                'flow' => VlessReality::getFlow($vless_config),
+                                'encryption' => 'none',
+                            ],
+                            'tag' => $node_raw->name,
+                            'streamSettings' => [
+                                'transport' => 'tcp',
+                                'security' => 'reality',
+                                'securitySettings' => [
+                                    'reality' => [
+                                        'server_name' => VlessReality::getServerName($vless_config),
+                                        'fingerprint' => VlessReality::getFingerprint($vless_config),
+                                        'public_key' => VlessReality::getPublicKey($vless_config),
+                                        'short_id' => VlessReality::getShortID($vless_config),
+                                    ],
+                                ],
+                            ],
+                        ];
+
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ?? ($node_custom_config['offset_port_node'] ?? 443);
                     $security = $node_custom_config['security'] ?? 'none';
                     $transport = $node_custom_config['network'] ?? 'tcp';

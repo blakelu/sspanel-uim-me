@@ -86,6 +86,39 @@ final class SingBox extends Base
 
                     break;
                 case 11:
+                    $vless_config = VlessReality::getConfig($node_raw);
+                    if (VlessReality::isEnabled($vless_config)) {
+                        if (! VlessReality::isConfigured($vless_config)) {
+                            $node = [];
+                            break;
+                        }
+
+                        $node = [
+                            'type' => 'vless',
+                            'tag' => $node_raw->name,
+                            'server' => $node_raw->server,
+                            'server_port' => VlessReality::getPort($vless_config),
+                            'uuid' => $user->uuid,
+                            'flow' => VlessReality::getFlow($vless_config),
+                            'packet_encoding' => 'xudp',
+                            'tls' => [
+                                'enabled' => true,
+                                'server_name' => VlessReality::getServerName($vless_config),
+                                'utls' => [
+                                    'enabled' => true,
+                                    'fingerprint' => VlessReality::getFingerprint($vless_config),
+                                ],
+                                'reality' => [
+                                    'enabled' => true,
+                                    'public_key' => VlessReality::getPublicKey($vless_config),
+                                    'short_id' => VlessReality::getShortID($vless_config),
+                                ],
+                            ],
+                        ];
+
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ??
                         ($node_custom_config['offset_port_node'] ?? 443);
                     $transport = ($node_custom_config['network'] ?? '') === 'tcp' ? '' : $node_custom_config['network'];
