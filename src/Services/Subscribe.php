@@ -16,6 +16,7 @@ use App\Services\Subscribe\SS;
 use App\Services\Subscribe\Trojan;
 use App\Services\Subscribe\V2Ray;
 use App\Services\Subscribe\V2RayJson;
+use App\Services\Subscribe\VlessReality;
 use App\Utils\Tools;
 use Illuminate\Support\Collection;
 
@@ -62,12 +63,13 @@ final class Subscribe
         return self::getClient($type)->getContent($user);
     }
 
-    public static function getClient(string $type): Json|SS|SIP002|V2Ray|Trojan|Hysteria2|Clash|SIP008|SingBox|V2RayJson
+    public static function getClient(string $type): Json|SS|SIP002|V2Ray|VlessReality|Trojan|Hysteria2|Clash|SIP008|SingBox|V2RayJson
     {
         return match ($type) {
             'ss' => new SS(),
             'sip002' => new SIP002(),
             'v2ray' => new V2Ray(),
+            'vless' => new VlessReality(),
             'trojan' => new Trojan(),
             'hysteria2' => new Hysteria2(),
             'clash' => new Clash(),

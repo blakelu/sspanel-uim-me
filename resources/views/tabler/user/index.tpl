@@ -243,6 +243,9 @@
                                         </p>
                                         {/if}
                                         <p>
+                                            客户端订阅（VLESS Reality，适用于 Shadowrocket）：<code class="spoiler">{$UniversalSub}/vless</code>
+                                        </p>
+                                        <p>
                                             客户端订阅（Hysteria2）：<code class="spoiler">{$UniversalSub}/hysteria2</code>
                                         </p>
                                         <div class="btn-list justify-content-start">
@@ -268,6 +271,10 @@
                                                 复制客户端订阅（Trojan）
                                             </a>
                                             {/if}
+                                            <a data-clipboard-text="{$UniversalSub}/vless"
+                                               class="copy btn btn-primary">
+                                                复制客户端订阅（VLESS Reality）
+                                            </a>
                                             <a data-clipboard-text="{$UniversalSub}/hysteria2"
                                                class="copy btn btn-primary">
                                                 复制客户端订阅（Hysteria2）
