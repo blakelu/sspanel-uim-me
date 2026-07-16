@@ -124,7 +124,7 @@ final class Smogate extends Base
         if (! $this->verify($request->getParams(), $request->getParam('sign'))) {
             die('FAIL');
         }
-        $this->postPayment($request->getParam('out_trade_no'), 'smogate');
+        $this->postPayment($request->getParam('out_trade_no'));
         die('SUCCESS');
     }
 

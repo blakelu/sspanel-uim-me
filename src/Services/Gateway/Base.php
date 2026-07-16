@@ -6,15 +6,21 @@ namespace App\Services\Gateway;
 
 use App\Models\Config;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Paylist;
 use App\Models\User;
 use App\Models\UserMoneyLog;
+use App\Services\DB;
+use App\Services\OrderActivation;
 use App\Services\Reward;
 use App\Utils\Tools;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest;
 use voku\helper\AntiXSS;
+use function bcadd;
+use function bccomp;
 use function get_called_class;
 use function in_array;
 use function json_decode;
@@ -52,41 +58,74 @@ abstract class Base
 
     public function postPayment(string $trade_no): void
     {
-        $paylist = (new Paylist())->where('tradeno', $trade_no)->first();
+        $orderId = DB::connection('default')->transaction(static function () use ($trade_no): ?int {
+            $paylist = (new Paylist())->where('tradeno', $trade_no)->lockForUpdate()->first();
 
-        if ($paylist?->status === 0) {
-            $paylist->datetime = time();
-            $paylist->status = 1;
-            $paylist->save();
-        }
+            if ($paylist === null) {
+                throw new RuntimeException('Payment record not found: ' . $trade_no);
+            }
 
-        $invoice = (new Invoice())->where('id', $paylist?->invoice_id)->first();
+            $invoice = (new Invoice())->where('id', $paylist->invoice_id)->lockForUpdate()->first();
 
-        if (($invoice?->status === 'unpaid' || $invoice?->status === 'partially_paid') &&
-            (int) $paylist?->total >= (int) $invoice?->price) {
-            $invoice->status = 'paid_gateway';
-            $invoice->update_time = time();
-            $invoice->pay_time = time();
-            $invoice->save();
-        }
+            if ($invoice === null) {
+                throw new RuntimeException('Invoice not found for payment: ' . $trade_no);
+            }
 
-        $user = (new User())->find($paylist?->userid);
+            if ((int) $paylist->status === 0) {
+                $paylist->datetime = time();
+                $paylist->status = 1;
+                $paylist->save();
+            }
 
-        if ($paylist?->total > $invoice?->price) {
-            $money_before = $user->money;
-            $user->money += $paylist?->total - $invoice?->price;
-            $user->save();
-            (new UserMoneyLog())->add(
-                $user->id,
-                $money_before,
-                $user->money,
-                $paylist?->total - $invoice?->price,
-                '超额支付账单 #' . $invoice?->id
-            );
-        }
+            $newlyPaid = in_array($invoice->status, ['unpaid', 'partially_paid']) &&
+                bccomp((string) $paylist->total, (string) $invoice->price, 2) >= 0;
 
-        if ($user !== null && $user->ref_by > 0 && Config::obtain('invite_mode') === 'reward') {
-            Reward::issuePaybackReward($user->id, $user->ref_by, $invoice?->price, $paylist?->invoice_id);
+            if ($newlyPaid) {
+                $invoice->status = 'paid_gateway';
+                $invoice->update_time = time();
+                $invoice->pay_time = time();
+                $invoice->save();
+            }
+
+            if (! $newlyPaid && $invoice->status !== 'paid_gateway') {
+                return null;
+            }
+
+            $order = (new Order())->where('id', $invoice->order_id)->lockForUpdate()->first();
+
+            if ($order !== null && $order->status === 'pending_payment') {
+                $order->status = 'pending_activation';
+                $order->update_time = time();
+                $order->save();
+            }
+
+            if ($newlyPaid) {
+                $user = (new User())->where('id', $paylist->userid)->lockForUpdate()->first();
+
+                if ($user !== null && bccomp((string) $paylist->total, (string) $invoice->price, 2) > 0) {
+                    $overpaid = bcadd((string) $paylist->total, '-' . (string) $invoice->price, 2);
+                    $moneyBefore = (string) $user->money;
+                    $user->money = bcadd($moneyBefore, $overpaid, 2);
+                    $user->save();
+                    (new UserMoneyLog())->add(
+                        $user->id,
+                        (float) $moneyBefore,
+                        (float) $user->money,
+                        (float) $overpaid,
+                        '超额支付账单 #' . $invoice->id
+                    );
+                }
+
+                if ($user !== null && $user->ref_by > 0 && Config::obtain('invite_mode') === 'reward') {
+                    Reward::issuePaybackReward($user->id, $user->ref_by, $invoice->price, $paylist->invoice_id);
+                }
+            }
+
+            return $order === null ? null : (int) $order->id;
+        }, 3);
+
+        if ($orderId !== null) {
+            OrderActivation::activate($orderId);
         }
     }
 
