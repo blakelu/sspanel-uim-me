@@ -14,7 +14,7 @@
                 </div>
                 <div class="col-auto ms-auto d-print-none">
                     <div class="btn-list">
-                        <button id="create" href="#" class="btn btn-primary">
+                        <button id="create" type="button" class="btn btn-primary">
                             <i class="icon ti ti-device-floppy"></i>
                             保存
                         </button>
@@ -86,7 +86,17 @@
 {include file='tinymce.tpl'}
 
 <script>
+    let announcementCreating = false;
+
     $("#create").click(function () {
+        if (announcementCreating) {
+            return;
+        }
+
+        announcementCreating = true;
+        const createButton = $(this);
+        createButton.prop('disabled', true);
+
         $.ajax({
             url: '/admin/announcement',
             type: 'POST',
@@ -105,9 +115,17 @@
                     $('#success-dialog').modal('show');
                     window.setTimeout("location.href=top.document.referrer", {$config['jump_delay']});
                 } else {
+                    announcementCreating = false;
+                    createButton.prop('disabled', false);
                     $('#fail-message').text(data.msg);
                     $('#fail-dialog').modal('show');
                 }
+            },
+            error: function () {
+                announcementCreating = false;
+                createButton.prop('disabled', false);
+                $('#fail-message').text('公告保存失败，请稍后重试');
+                $('#fail-dialog').modal('show');
             }
         })
     });
