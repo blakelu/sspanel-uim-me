@@ -42,6 +42,14 @@
                         colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.H,
                     });
+                    const redirectButton = $('<button>', {
+                        type: 'button',
+                        class: 'btn btn-primary mt-3',
+                        text: '前往支付',
+                    }).on('click', () => {
+                        window.location.href = data.qrcode;
+                    });
+                    f2fQrcodeContainer.append(redirectButton);
                     f2fQrcodeContainer.append(
                         '<div class="text-center my-3"><p>支付成功后请手动刷新页面</p></div>'
                     );
