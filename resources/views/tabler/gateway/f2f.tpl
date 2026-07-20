@@ -44,7 +44,7 @@
                     });
                     const redirectButton = $('<button>', {
                         type: 'button',
-                        class: 'btn btn-primary mt-3',
+                        class: 'btn btn-primary mt-3 d-md-none',
                         text: '前往支付',
                     }).on('click', () => {
                         window.location.href = data.qrcode;
