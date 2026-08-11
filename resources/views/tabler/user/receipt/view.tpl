@@ -71,7 +71,7 @@
     }
 
     .receipt-fields.compact {
-        grid-template-columns: 28mm 1fr;
+        grid-template-columns: calc(28mm - 1em) 1fr;
     }
 
     .receipt-label {
