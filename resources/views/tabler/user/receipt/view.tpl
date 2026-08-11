@@ -217,31 +217,31 @@
                 </header>
 
                 <div class="receipt-rule"></div>
-                <h2 class="receipt-title">E - RECEIPT / 电子收据</h2>
+                <h2 class="receipt-title">E - RECEIPT</h2>
 
                 <section class="receipt-parties">
                     <div class="receipt-fields">
-                        <span class="receipt-label">Buyer Name / 买方名称</span>
+                        <span class="receipt-label">Buyer Name</span>
                         <strong class="receipt-value">{$receipt->buyer_name|escape}</strong>
-                        <span class="receipt-label">TIN / 税号</span>
+                        <span class="receipt-label">TIN</span>
                         <span class="receipt-value">{$receipt->buyer_tax_id|default:'NA'|escape}</span>
-                        <span class="receipt-label">Registration No. / 注册号</span>
+                        <span class="receipt-label">Registration No.</span>
                         <span class="receipt-value">{$receipt->buyer_registration_no|default:'NA'|escape}</span>
-                        <span class="receipt-label">Contact No. / 联系电话</span>
+                        <span class="receipt-label">Contact No.</span>
                         <span class="receipt-value">{$receipt->buyer_contact_no|default:'NA'|escape}</span>
-                        <span class="receipt-label">Email / 电子邮箱</span>
+                        <span class="receipt-label">Email</span>
                         <span class="receipt-value">{$receipt->buyer_email|default:'NA'|escape}</span>
                         <span class="receipt-label">SST No.</span>
                         <span class="receipt-value">{$receipt->buyer_sst_no|default:'NA'|escape}</span>
-                        <span class="receipt-label">Address / 地址</span>
+                        <span class="receipt-label">Address</span>
                         <span class="receipt-value">{$receipt->buyer_address|default:'NA'|escape|nl2br}</span>
                     </div>
                     <div class="receipt-fields compact">
                         <span class="receipt-label">Receipt No.</span>
                         <strong class="receipt-value">{$receipt->receipt_no|escape}</strong>
-                        <span class="receipt-label">Date / 日期</span>
+                        <span class="receipt-label">Date</span>
                         <span class="receipt-value">{$receipt->date|escape}</span>
-                        <span class="receipt-label">Currency / 币种</span>
+                        <span class="receipt-label">Currency</span>
                         <span class="receipt-value">{$receipt->currency|escape}</span>
                         <span class="receipt-label">Order No.</span>
                         <span class="receipt-value">#{$receipt->order_id}</span>
@@ -261,7 +261,7 @@
                     <thead>
                     <tr>
                         <th>No.</th>
-                        <th>Item / 项目</th>
+                        <th>Item</th>
                         <th>Qty</th>
                         <th>Unit Price</th>
                         <th>Discount</th>
@@ -286,22 +286,22 @@
                     <div class="receipt-summary">
                         <div class="receipt-summary-title">AMOUNT ({$receipt->currency|escape})</div>
                         <div class="receipt-summary-row">
-                            <span>Total Excluding Tax / 未税金额</span><span>{$receipt->subtotal_text}</span>
+                            <span>Total Excluding Tax</span><span>{$receipt->subtotal_text}</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Region / 税务地区</span><span>{$receipt->tax_region|escape}</span>
+                            <span>Tax Region</span><span>{$receipt->tax_region|escape}</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Type / 税种</span><span>{$receipt->tax_type|escape}</span>
+                            <span>Tax Type</span><span>{$receipt->tax_type|escape}</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Rate / 税率</span><span>{$receipt->tax_rate_text}%</span>
+                            <span>Tax Rate</span><span>{$receipt->tax_rate_text}%</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Amount / 税额</span><span>{$receipt->tax_amount_text}</span>
+                            <span>Tax Amount</span><span>{$receipt->tax_amount_text}</span>
                         </div>
                         <div class="receipt-summary-row total">
-                            <span>Total Including Tax / 含税合计</span><span>{$receipt->total_text}</span>
+                            <span>Total Including Tax</span><span>{$receipt->total_text}</span>
                         </div>
                     </div>
                 </section>
