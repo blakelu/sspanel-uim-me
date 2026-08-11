@@ -14,7 +14,23 @@
                 </div>
                 <div class="col-auto">
                     <div class="btn-list">
-                        <a href="/user/invoice/{$invoice->id}/view" targer="_blank" class="btn btn-primary">
+                        {if $receipt !== null}
+                        <a href="/user/receipt/{$receipt->id}/view" target="_blank" class="btn btn-success">
+                            <i class="icon ti ti-receipt"></i>
+                            查看收据
+                        </a>
+                        {elseif $receipt_eligible}
+                        <a href="/user/order/{$order->id}/receipt/create" class="btn btn-success">
+                            <i class="icon ti ti-receipt"></i>
+                            开收据
+                        </a>
+                        {else}
+                        <button class="btn btn-success" type="button" disabled title="账单支付完成后可开收据">
+                            <i class="icon ti ti-receipt"></i>
+                            开收据
+                        </button>
+                        {/if}
+                        <a href="/user/invoice/{$invoice->id}/view" target="_blank" class="btn btn-primary">
                             <i class="icon ti ti-file-dollar"></i>
                             查看账单
                         </a>

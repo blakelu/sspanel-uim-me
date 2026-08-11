@@ -9,6 +9,19 @@ $_ENV['debug'] = false;                  // debug模式开关，生产环境请�
 $_ENV['appName'] = 'SSPanel-UIM';         // 站点名称
 $_ENV['baseUrl'] = 'https://example.com'; // 站点地址，必须以https://开头，不要以/结尾
 
+// 收据设置（开具时会保存快照，之后修改这些配置不会影响历史收据）
+$_ENV['receipt_seller_name'] = $_ENV['appName'];
+$_ENV['receipt_seller_registration_no'] = 'W10211045000010';
+$_ENV['receipt_seller_address'] = 'Suite 8-08, Menara Contoh, Jalan Demo 1, 50450 Kuala Lumpur, Malaysia';
+$_ENV['receipt_seller_tax_id'] = 'C11091193000';
+$_ENV['receipt_seller_sst_no'] = 'NA';
+$_ENV['receipt_seller_logo'] = '/images/uim-logo-round_768x768.png';
+$_ENV['receipt_currency'] = 'CNY';
+$_ENV['receipt_tax_region'] = 'China';
+$_ENV['receipt_tax_type'] = 'Service Tax';
+$_ENV['receipt_tax_rate'] = 0;
+$_ENV['receipt_footer'] = 'THANK YOU FOR SHOPPING';
+
 // WebAPI
 $_ENV['webAPI'] = true;                // 是否开启WebAPI功能
 $_ENV['webAPIUrl'] = $_ENV['baseUrl']; // WebAPI地址，如需和站点地址相同，请不要修改

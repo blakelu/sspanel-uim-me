@@ -8,6 +8,7 @@ use App\Controllers\BaseController;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Receipt;
 use App\Models\UserCoupon;
 use App\Utils\Cookie;
 use App\Utils\Tools;
@@ -15,6 +16,7 @@ use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest;
+
 use function explode;
 use function in_array;
 use function json_decode;
@@ -98,6 +100,8 @@ final class OrderController extends BaseController
         $order->content = json_decode($order->product_content);
 
         $invoice = (new Invoice())->where('order_id', $id)->first();
+        $receipt = (new Receipt())->where('user_id', $this->user->id)->where('order_id', $id)->first();
+        $receipt_eligible = in_array($invoice->status, ['paid_gateway', 'paid_balance', 'paid_admin'], true);
         $invoice->status = $invoice->status();
         $invoice->create_time = Tools::toDateTime($invoice->create_time);
         $invoice->update_time = Tools::toDateTime($invoice->update_time);
@@ -108,6 +112,8 @@ final class OrderController extends BaseController
             $this->view()
                 ->assign('order', $order)
                 ->assign('invoice', $invoice)
+                ->assign('receipt', $receipt)
+                ->assign('receipt_eligible', $receipt_eligible)
                 ->fetch('user/order/view.tpl')
         );
     }
