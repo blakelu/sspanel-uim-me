@@ -112,20 +112,20 @@
             success: function (data) {
                 if (data.ret === 1) {
                     $('#success-message').text(data.msg);
-                    $('#success-dialog').modal('show');
+                    successDialog.show();
                     window.setTimeout("location.href=top.document.referrer", {$config['jump_delay']});
                 } else {
                     announcementCreating = false;
                     createButton.prop('disabled', false);
                     $('#fail-message').text(data.msg);
-                    $('#fail-dialog').modal('show');
+                    failDialog.show();
                 }
             },
             error: function () {
                 announcementCreating = false;
                 createButton.prop('disabled', false);
                 $('#fail-message').text('公告保存失败，请稍后重试');
-                $('#fail-dialog').modal('show');
+                failDialog.show();
             }
         })
     });

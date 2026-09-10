@@ -632,13 +632,13 @@
             if (data.ret === 1) {
                 if (type === 'telegram') {
                     $('#success-message').text(data.msg);
-                    $('#success-dialog').modal('show');
+                    successDialog.show();
                 } else {
                     window.location.replace(data.redir);
                 }
             } else {
                 $('#error-message').text(data.msg);
-                $('#fail-dialog').modal('show');
+                failDialog.show();
             }
         }
         {/if}

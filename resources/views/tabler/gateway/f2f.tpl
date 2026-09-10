@@ -58,14 +58,14 @@
                     f2fQrcodeContainer.empty();
                     f2fPayButton.prop('disabled', false);
                     $('#fail-message').text(data.msg);
-                    $('#fail-dialog').modal('show');
+                    failDialog.show();
                 }
             },
             error: () => {
                 f2fQrcodeContainer.empty();
                 f2fPayButton.prop('disabled', false);
                 $('#fail-message').text('付款二维码生成失败，请稍后重试');
-                $('#fail-dialog').modal('show');
+                failDialog.show();
             }
         })
     }
