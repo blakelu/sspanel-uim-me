@@ -218,6 +218,11 @@ final class OrderController extends BaseController
             $buy_price = $product->price - $discount;
         }
 
+        // Database decimal values are strings, while discounts produce floats.
+        // Normalize before checking for a free order so "0.00" and 0.0 are handled alike.
+        $buy_price = max(0.0, round((float) $buy_price, 2));
+        $is_free_order = $buy_price === 0.0;
+
         $product_limit = json_decode($product->limit);
 
         if ($product_limit->class_required !== '' && $user->class < (int) $product_limit->class_required) {
@@ -253,7 +258,7 @@ final class OrderController extends BaseController
         $order->product_content = $product->content;
         $order->coupon = $coupon_raw;
         $order->price = $buy_price;
-        $order->status = $buy_price === 0 ? 'pending_activation' : 'pending_payment';
+        $order->status = $is_free_order ? 'pending_activation' : 'pending_payment';
         $order->create_time = time();
         $order->update_time = time();
         $order->save();
@@ -278,10 +283,10 @@ final class OrderController extends BaseController
         $invoice->order_id = $order->id;
         $invoice->content = json_encode($invoice_content);
         $invoice->price = $buy_price;
-        $invoice->status = $buy_price === 0 ? 'paid_gateway' : 'unpaid';
+        $invoice->status = $is_free_order ? 'paid_gateway' : 'unpaid';
         $invoice->create_time = time();
         $invoice->update_time = time();
-        $invoice->pay_time = 0;
+        $invoice->pay_time = $is_free_order ? time() : 0;
         $invoice->type = 'product';
         $invoice->save();
 

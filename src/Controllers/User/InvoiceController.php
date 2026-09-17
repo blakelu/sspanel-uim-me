@@ -58,7 +58,7 @@ final class InvoiceController extends BaseController
             return $response->withRedirect('/user/invoice');
         }
 
-        $paylist = [];
+        $paylist = null;
 
         if ($invoice->status === 'paid_gateway') {
             $paylist = (new Paylist())->where('invoice_id', $invoice->id)->where('status', 1)->first();

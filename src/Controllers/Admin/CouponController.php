@@ -216,7 +216,15 @@ final class CouponController extends BaseController
     public function disable(ServerRequest $request, Response $response, array $args): ResponseInterface
     {
         $coupon_id = $args['id'];
-        $coupon = (new UserCoupon())->find($coupon_id)->first();
+        $coupon = (new UserCoupon())->find($coupon_id);
+
+        if ($coupon === null) {
+            return $response->withJson([
+                'ret' => 0,
+                'msg' => '优惠码不存在',
+            ]);
+        }
+
         $limit = json_decode($coupon->limit);
         $limit->disabled = 1;
         $coupon->limit = json_encode($limit);
