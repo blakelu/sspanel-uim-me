@@ -116,6 +116,17 @@ final class SingBox extends Base
                             ],
                         ];
 
+                        if (VlessReality::isWebSocketTLS($vless_config)) {
+                            $ws_options = VlessReality::getWebSocketOptions($vless_config);
+                            unset($node['flow'], $node['tls']['reality']);
+                            $node['tls']['alpn'] = ['http/1.1'];
+                            $node['transport'] = [
+                                'type' => 'ws',
+                                'path' => $ws_options['path'],
+                                'headers' => $ws_options['headers'],
+                            ];
+                        }
+
                         break;
                     }
 

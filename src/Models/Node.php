@@ -88,18 +88,24 @@ final class Node extends Model
             1 => 'Shadowsocks2022',
             2 => 'TUIC',
             3 => 'WireGuard',
-            11 => $this->usesVlessReality() ? 'VLESS Reality' : 'Vmess',
+            11 => $this->vlessTypeName(),
             14 => 'Trojan',
             15 => 'Hysteria2',
             default => '未知',
         };
     }
 
-    private function usesVlessReality(): bool
+    private function vlessTypeName(): string
     {
         $config = json_decode((string) $this->custom_config, true);
 
-        return is_array($config) && strtolower((string) ($config['protocol'] ?? '')) === 'vless';
+        if (! is_array($config) || strtolower((string) ($config['protocol'] ?? '')) !== 'vless') {
+            return 'Vmess';
+        }
+
+        return strtolower((string) ($config['network'] ?? 'tcp')) === 'ws'
+            && strtolower((string) ($config['security'] ?? 'reality')) === 'tls'
+            ? 'VLESS WS + TLS' : 'VLESS Reality';
     }
 
     public function isDynamicRate(): string

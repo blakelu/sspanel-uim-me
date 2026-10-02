@@ -92,6 +92,26 @@ final class V2RayJson extends Base
                             ],
                         ];
 
+                        if (VlessReality::isWebSocketTLS($vless_config)) {
+                            $ws_options = VlessReality::getWebSocketOptions($vless_config);
+                            unset($node['settings']['flow']);
+                            $node['streamSettings'] = [
+                                'transport' => 'ws',
+                                'transportSettings' => [
+                                    'ws' => [
+                                        'path' => $ws_options['path'],
+                                        'header' => $ws_options['headers'],
+                                    ],
+                                ],
+                                'security' => 'tls',
+                                'securitySettings' => [
+                                    'tls' => [
+                                        'server_name' => VlessReality::getServerName($vless_config),
+                                    ],
+                                ],
+                            ];
+                        }
+
                         break;
                     }
 

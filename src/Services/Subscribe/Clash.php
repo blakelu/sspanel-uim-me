@@ -106,7 +106,7 @@ final class Clash extends Base
                             'server' => $node_raw->server,
                             'port' => VlessReality::getPort($vless_config),
                             'uuid' => $user->uuid,
-                            'network' => 'tcp',
+                            'network' => VlessReality::getNetwork($vless_config),
                             'tls' => true,
                             'udp' => (bool) ($vless_config['udp'] ?? true),
                             'flow' => VlessReality::getFlow($vless_config),
@@ -117,6 +117,12 @@ final class Clash extends Base
                                 'short-id' => VlessReality::getShortID($vless_config),
                             ],
                         ];
+
+                        if (VlessReality::isWebSocketTLS($vless_config)) {
+                            unset($node['flow'], $node['reality-opts']);
+                            $node['ws-opts'] = VlessReality::getWebSocketOptions($vless_config);
+                            $node['alpn'] = ['http/1.1'];
+                        }
 
                         break;
                     }

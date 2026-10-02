@@ -80,6 +80,7 @@ For complete installation and usage documentation, please visit:
 📚 [SSPanel-UIM 文档 | Documentation](https://docs.sspanel.io)
 
 Hysteria2 节点配置见 [Hysteria2 接入说明](docs/HYSTERIA2.md)。
+VLESS REALITY 与 WebSocket + TLS 节点配置见 [VLESS 接入说明](docs/VLESS.md)。
 
 ## 社区 | Community
 
