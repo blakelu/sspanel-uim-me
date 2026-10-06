@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Link;
 use App\Models\Node;
 use App\Services\Subscribe\Clash;
+use App\Services\Subscribe\AnyTLS;
 use App\Services\Subscribe\Hysteria2;
 use App\Services\Subscribe\Json;
 use App\Services\Subscribe\SingBox;
@@ -63,7 +64,7 @@ final class Subscribe
         return self::getClient($type)->getContent($user);
     }
 
-    public static function getClient(string $type): Json|SS|SIP002|V2Ray|VlessReality|Trojan|Hysteria2|Clash|SIP008|SingBox|V2RayJson
+    public static function getClient(string $type): Json|SS|SIP002|V2Ray|VlessReality|Trojan|Hysteria2|AnyTLS|Clash|SIP008|SingBox|V2RayJson
     {
         return match ($type) {
             'ss' => new SS(),
@@ -72,6 +73,7 @@ final class Subscribe
             'vless' => new VlessReality(),
             'trojan' => new Trojan(),
             'hysteria2' => new Hysteria2(),
+            'anytls' => new AnyTLS(),
             'clash' => new Clash(),
             'sip008' => new SIP008(),
             'singbox' => new SingBox(),

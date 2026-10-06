@@ -66,9 +66,34 @@ final class VlessWebSocketSubscribeTest extends TestCase
         $this->assertSame('de.cf.example.com', $node['ws-opts']['headers']['Host']);
         $this->assertArrayNotHasKey('reality-opts', $node);
         $this->assertArrayNotHasKey('flow', $node);
+        $this->assertArrayNotHasKey('ech-opts', $node);
         $this->assertSame('xtls-rprx-vision', $config['proxies'][1]['flow']);
         $this->assertSame('vmess', $config['proxies'][2]['type']);
         $this->assertSame(['Germany WS', 'Reality', 'VMess'], $config['proxy-groups'][0]['proxies']);
+    }
+
+    #[RequiresPhpExtension('yaml')]
+    public function testClashExportsECHAndKeepsOriginNamesWhenUsingAnEdgeAddress(): void
+    {
+        $node = VlessSubscribeSource::$nodes[0];
+        $config = json_decode($node->custom_config, true);
+        $key = 'AEX+DQBBBwAgACA0ZfO9G0mfh7bIMcIFxViIDwERQ/Cfw2FNVgylWE7yNAAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA=';
+        $config['connect_address'] = '104.21.42.5';
+        $config['ech-opts'] = ['enable' => true, 'config' => $key];
+        $node->custom_config = json_encode($config);
+
+        $result = yaml_parse((new Clash())->getContent($this->user));
+        $this->assertCount(3, $result['proxies']);
+        $ws = $result['proxies'][0];
+        $this->assertSame('104.21.42.5', $ws['server']);
+        $this->assertSame('de.cf.example.com', $ws['servername']);
+        $this->assertSame('de.cf.example.com', $ws['ws-opts']['headers']['Host']);
+        $this->assertSame('/vless', $ws['ws-opts']['path']);
+        $this->assertSame(['enable' => true, 'config' => $key], $ws['ech-opts']);
+        $this->assertArrayNotHasKey('client-fingerprint', $ws);
+        $this->assertArrayNotHasKey('ech-opts', $result['proxies'][1]);
+        $this->assertSame('chrome', $result['proxies'][1]['client-fingerprint']);
+        $this->assertArrayNotHasKey('ech-opts', $result['proxies'][2]);
     }
 
     public function testSingBoxOutputsWebSocketAndPlainTLS(): void

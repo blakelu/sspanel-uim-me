@@ -244,6 +244,22 @@ final class SingBox extends Base
                     }
 
                     break;
+                case 16:
+                    $anytls_config = AnyTLS::getConfig($node_raw);
+                    $node = [
+                        'type' => 'anytls',
+                        'tag' => $node_raw->name,
+                        'server' => $node_raw->server,
+                        'server_port' => AnyTLS::getPort($anytls_config),
+                        'password' => $user->uuid,
+                        'tls' => [
+                            'enabled' => true,
+                            'server_name' => AnyTLS::getSNI($node_raw, $anytls_config),
+                            'insecure' => AnyTLS::isInsecure($anytls_config),
+                        ],
+                    ];
+
+                    break;
                 default:
                     $node = [];
                     break;

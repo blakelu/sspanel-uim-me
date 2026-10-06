@@ -71,6 +71,7 @@
                                 <div class="col">
                                     <select id="sort" class="col form-select" value="{$node->sort}">
                                         <option value="15" {if $node->sort === 15}selected{/if}>Hysteria2</option>
+                                        <option value="16" {if $node->sort === 16}selected{/if}>AnyTLS</option>
                                         <option value="14" {if $node->sort === 14}selected{/if}>Trojan</option>
                                         <option value="11" {if $node->sort === 11}selected{/if}>Vmess / VLESS（自定义配置）</option>
                                         <option value="2" {if $node->sort === 2}selected{/if}>TUIC</option>

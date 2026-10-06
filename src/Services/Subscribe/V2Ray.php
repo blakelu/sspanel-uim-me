@@ -26,6 +26,11 @@ final class V2Ray extends Base
         foreach ($nodes_raw as $node_raw) {
             $node_custom_config = json_decode($node_raw->custom_config, true);
 
+            if ((int) $node_raw->sort === 16) {
+                $links .= AnyTLS::buildURI($node_raw, $user) . PHP_EOL;
+                continue;
+            }
+
             if ((int) $node_raw->sort === 11) {
                 if (VlessReality::isEnabled(VlessReality::getConfig($node_raw))) {
                     $uri = VlessReality::buildURI($node_raw, $user);

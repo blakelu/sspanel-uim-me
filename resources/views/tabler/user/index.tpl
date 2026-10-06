@@ -248,6 +248,9 @@
                                         <p>
                                             客户端订阅（Hysteria2）：<code class="spoiler">{$UniversalSub}/hysteria2</code>
                                         </p>
+                                        <p>
+                                            客户端订阅（AnyTLS）：<code class="spoiler">{$UniversalSub}/anytls</code>
+                                        </p>
                                         <div class="btn-list justify-content-start">
                                             {if $public_setting['enable_ss_sub']}
                                             <a data-clipboard-text="{$UniversalSub}/ss"
@@ -278,6 +281,10 @@
                                             <a data-clipboard-text="{$UniversalSub}/hysteria2"
                                                class="copy btn btn-primary">
                                                 复制客户端订阅（Hysteria2）
+                                            </a>
+                                            <a data-clipboard-text="{$UniversalSub}/anytls"
+                                               class="copy btn btn-primary">
+                                                复制客户端订阅（AnyTLS）
                                             </a>
                                         </div>
                                     </div>

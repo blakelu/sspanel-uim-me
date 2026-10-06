@@ -122,6 +122,16 @@ final class Clash extends Base
                             unset($node['flow'], $node['reality-opts']);
                             $node['ws-opts'] = VlessReality::getWebSocketOptions($vless_config);
                             $node['alpn'] = ['http/1.1'];
+                            $connect_address = trim((string) ($vless_config['connect_address'] ?? ''));
+                            if ($connect_address !== '') {
+                                $node['server'] = $connect_address;
+                            }
+                            $ech_options = EchConfig::getOptions(VlessReality::getServerName($vless_config), $vless_config);
+                            if ($ech_options !== null) {
+                                $node['ech-opts'] = $ech_options;
+                                // uTLS fingerprints can prevent ECH negotiation in Mihomo.
+                                unset($node['client-fingerprint']);
+                            }
                         }
 
                         break;
@@ -226,6 +236,20 @@ final class Clash extends Base
                     if ($down_mbps > 0) {
                         $node['down'] = $down_mbps . ' Mbps';
                     }
+
+                    break;
+                case 16:
+                    $anytls_config = AnyTLS::getConfig($node_raw);
+                    $node = [
+                        'name' => $node_raw->name,
+                        'type' => 'anytls',
+                        'server' => $node_raw->server,
+                        'port' => AnyTLS::getPort($anytls_config),
+                        'password' => $user->uuid,
+                        'sni' => AnyTLS::getSNI($node_raw, $anytls_config),
+                        'skip-cert-verify' => AnyTLS::isInsecure($anytls_config),
+                        'udp' => true,
+                    ];
 
                     break;
                 default:

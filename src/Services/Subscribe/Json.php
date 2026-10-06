@@ -27,6 +27,7 @@ final class Json extends Base
                 'clash' => $sub_url . '/clash',
                 'vless' => $sub_url . '/vless',
                 'hysteria2' => $sub_url . '/hysteria2',
+                'anytls' => $sub_url . '/anytls',
             ],
         ]);
     }

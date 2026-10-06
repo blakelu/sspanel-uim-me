@@ -91,6 +91,7 @@ final class Node extends Model
             11 => $this->vlessTypeName(),
             14 => 'Trojan',
             15 => 'Hysteria2',
+            16 => 'AnyTLS',
             default => '未知',
         };
     }
