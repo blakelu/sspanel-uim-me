@@ -90,7 +90,7 @@ final class SingBox extends Base
                     if (VlessReality::isEnabled($vless_config)) {
                         // Official sing-box has no XHTTP transport. Do not
                         // silently export an XHTTP node as raw TCP REALITY.
-                        if (! VlessReality::isConfigured($vless_config) || VlessReality::isXHTTPReality($vless_config)) {
+                        if (! VlessReality::isConfigured($vless_config) || VlessReality::isXHTTP($vless_config)) {
                             $node = [];
                             break;
                         }

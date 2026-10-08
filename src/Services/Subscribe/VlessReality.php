@@ -56,11 +56,14 @@ final class VlessReality extends Base
                 && str_starts_with(self::getWebSocketOptions($config)['path'], '/');
         }
 
-        if (self::isXHTTPReality($config)) {
+        if (self::isXHTTP($config)) {
             $options = self::getXHTTPOptions($config);
             if (! str_starts_with($options['path'], '/')
                 || ! in_array($options['mode'], ['auto', 'stream-one', 'stream-up', 'packet-up'], true)) {
                 return false;
+            }
+            if (self::getSecurity($config) === 'tls') {
+                return self::getServerName($config) !== '';
             }
         }
 
@@ -90,6 +93,11 @@ final class VlessReality extends Base
     public static function isWebSocketTLS(array $config): bool
     {
         return self::getNetwork($config) === 'ws' && self::getSecurity($config) === 'tls';
+    }
+
+    public static function isXHTTP(array $config): bool
+    {
+        return self::getNetwork($config) === 'xhttp';
     }
 
     public static function isXHTTPReality(array $config): bool
@@ -159,7 +167,7 @@ final class VlessReality extends Base
 
     public static function getFlow(array $config): string
     {
-        if (self::isWebSocketTLS($config) || self::isXHTTPReality($config)) {
+        if (self::isWebSocketTLS($config) || self::isXHTTP($config)) {
             return '';
         }
 
@@ -197,8 +205,12 @@ final class VlessReality extends Base
                 'path' => $ws_options['path'],
                 'fp' => self::getFingerprint($config),
             ];
-        } elseif (self::isXHTTPReality($config)) {
+        } elseif (self::isXHTTP($config)) {
             unset($query['flow']);
+            if (self::getSecurity($config) === 'tls') {
+                $query['security'] = 'tls';
+                unset($query['pbk'], $query['sid']);
+            }
             $query['type'] = 'xhttp';
             $query = array_merge($query, self::getXHTTPOptions($config));
         }

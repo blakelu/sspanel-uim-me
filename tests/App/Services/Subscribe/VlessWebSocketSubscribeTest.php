@@ -172,6 +172,37 @@ final class VlessWebSocketSubscribeTest extends TestCase
         $this->assertCount(3, $json['outbounds']);
     }
 
+    #[RequiresPhpExtension('yaml')]
+    public function testXHTTPTLSExportsWithoutRealityCredentialsOrFlow(): void
+    {
+        $config = [
+            'protocol' => 'vless', 'network' => 'xhttp', 'security' => 'tls',
+            'sni' => 'cf.example.com', 'path' => '/xhttp', 'mode' => 'packet-up',
+            'host' => 'cf.example.com', 'flow' => 'xtls-rprx-vision',
+        ];
+        $source = $this->node('XHTTP TLS', $config);
+        VlessSubscribeSource::$nodes[] = $source;
+        $result = yaml_parse((new Clash())->getContent($this->user));
+        $node = $result['proxies'][3];
+        $this->assertTrue($node['tls']);
+        $this->assertSame('xhttp', $node['network']);
+        $this->assertSame(['path' => '/xhttp', 'mode' => 'packet-up', 'host' => 'cf.example.com'], $node['xhttp-opts']);
+        $this->assertArrayNotHasKey('reality-opts', $node);
+        $this->assertArrayNotHasKey('flow', $node);
+        parse_str(parse_url(VlessReality::buildURI($source, $this->user), PHP_URL_QUERY), $query);
+        $this->assertSame('tls', $query['security']);
+        $this->assertSame('xhttp', $query['type']);
+        $this->assertSame('packet-up', $query['mode']);
+        foreach (['flow', 'pbk', 'sid'] as $key) {
+            $this->assertArrayNotHasKey($key, $query);
+        }
+        foreach ([['path' => 'invalid'], ['mode' => 'invalid'], ['sni' => '']] as $invalid) {
+            $this->assertFalse(VlessReality::isConfigured(array_replace($config, $invalid)));
+        }
+        $this->assertCount(5, json_decode((new SingBox())->getContent($this->user), true)['outbounds']);
+        $this->assertCount(3, json_decode((new V2RayJson())->getContent($this->user), true)['outbounds']);
+    }
+
     private function node(string $name, array $config): object
     {
         return (object) [
