@@ -140,6 +140,38 @@ final class VlessWebSocketSubscribeTest extends TestCase
         $this->assertSame(1, substr_count($v2ray, 'vmess://'));
     }
 
+    #[RequiresPhpExtension('yaml')]
+    public function testXHTTPRealityClashAndURIHaveMatchingTransportAndCredentials(): void
+    {
+        VlessSubscribeSource::$nodes[] = $this->node('XHTTP', [
+            'protocol' => 'vless', 'network' => 'xhttp', 'security' => 'reality',
+            'sni' => 'www.example.com', 'public_key' => 'public-key', 'short_id' => 'abcd1234',
+            'path' => '/xhttp', 'mode' => 'auto', 'flow' => 'xtls-rprx-vision',
+        ]);
+        $config = yaml_parse((new Clash())->getContent($this->user));
+        $this->assertCount(4, $config['proxies']);
+        $node = $config['proxies'][3];
+        $this->assertSame('vless', $node['type']);
+        $this->assertSame('xhttp', $node['network']);
+        $this->assertSame($this->user->uuid, $node['uuid']);
+        $this->assertSame(['path' => '/xhttp', 'mode' => 'auto'], $node['xhttp-opts']);
+        $this->assertSame(['public-key' => 'public-key', 'short-id' => 'abcd1234'], $node['reality-opts']);
+        $this->assertSame(['h2'], $node['alpn']);
+        $this->assertArrayNotHasKey('flow', $node);
+        $this->assertArrayNotHasKey('ws-opts', $node);
+        $this->assertSame(['Germany WS', 'Reality', 'VMess', 'XHTTP'], $config['proxy-groups'][0]['proxies']);
+        foreach ([new VlessReality(), new V2Ray()] as $exporter) {
+            $content = $exporter->getContent($this->user);
+            $this->assertStringContainsString('type=xhttp&path=%2Fxhttp&mode=auto', $content);
+            $this->assertSame(3, substr_count($content, 'vless://'));
+        }
+        // Unsupported exporters must not downgrade the XHTTP transport to TCP.
+        $singbox = json_decode((new SingBox())->getContent($this->user), true);
+        $this->assertCount(5, $singbox['outbounds']);
+        $json = json_decode((new V2RayJson())->getContent($this->user), true);
+        $this->assertCount(3, $json['outbounds']);
+    }
+
     private function node(string $name, array $config): object
     {
         return (object) [

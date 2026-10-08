@@ -123,4 +123,43 @@ final class VlessRealityTest extends TestCase
         $config['security'] = 'none';
         $this->assertFalse(VlessReality::isConfigured($config));
     }
+
+    public function testXHTTPRealityExportsPathModeAndKeepsKeysWithoutVision(): void
+    {
+        $config = [
+            'protocol' => 'vless', 'network' => 'xhttp', 'security' => 'reality',
+            'sni' => 'www.example.com', 'public_key' => 'public-key', 'short_id' => 'abcd1234',
+            'path' => '/proxy/xhttp', 'mode' => 'stream-one', 'host' => 'http.example.com',
+            'flow' => 'xtls-rprx-vision', 'offset_port_user' => 30443,
+        ];
+        $node = (object) ['name' => 'XHTTP', 'server' => '2001:db8::1', 'custom_config' => json_encode($config)];
+        $uri = VlessReality::buildURI($node, (object) ['uuid' => '00000000-0000-4000-8000-000000000001']);
+        $this->assertStringStartsWith('vless://00000000-0000-4000-8000-000000000001@[2001:db8::1]:30443?', $uri);
+        parse_str(parse_url($uri, PHP_URL_QUERY), $query);
+        $this->assertSame('xhttp', $query['type']);
+        $this->assertSame('reality', $query['security']);
+        $this->assertSame('/proxy/xhttp', $query['path']);
+        $this->assertSame('stream-one', $query['mode']);
+        $this->assertSame('http.example.com', $query['host']);
+        $this->assertSame('public-key', $query['pbk']);
+        $this->assertSame('abcd1234', $query['sid']);
+        $this->assertArrayNotHasKey('flow', $query);
+        $this->assertSame('', VlessReality::getFlow($config));
+    }
+
+    public function testXHTTPAliasesAndInvalidConfiguration(): void
+    {
+        $base = ['network' => 'splithttp', 'sni' => 'www.example.com', 'pbk' => 'public-key', 'sid' => 'abcd1234'];
+        foreach (['xhttp-opts', 'xhttp_opts', 'xhttpSettings', 'splithttpSettings'] as $alias) {
+            $config = $base + [$alias => ['path' => '/test', 'mode' => 'packet-up']];
+            $this->assertTrue(VlessReality::isConfigured($config));
+            $this->assertSame('xhttp', VlessReality::getNetwork($config));
+            $this->assertSame(['path' => '/test', 'mode' => 'packet-up'], VlessReality::getXHTTPOptions($config));
+        }
+        $this->assertFalse(VlessReality::isConfigured($base + ['path' => 'invalid']));
+        $this->assertFalse(VlessReality::isConfigured($base + ['mode' => 'invalid']));
+        $this->assertFalse(VlessReality::isConfigured($base + ['security' => 'tls']));
+        unset($base['pbk']);
+        $this->assertFalse(VlessReality::isConfigured($base));
+    }
 }

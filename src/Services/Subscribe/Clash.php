@@ -132,6 +132,10 @@ final class Clash extends Base
                                 // uTLS fingerprints can prevent ECH negotiation in Mihomo.
                                 unset($node['client-fingerprint']);
                             }
+                        } elseif (VlessReality::isXHTTPReality($vless_config)) {
+                            unset($node['flow']);
+                            $node['xhttp-opts'] = VlessReality::getXHTTPOptions($vless_config);
+                            $node['alpn'] = ['h2'];
                         }
 
                         break;

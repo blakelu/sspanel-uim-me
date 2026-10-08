@@ -63,7 +63,9 @@ final class V2RayJson extends Base
                 case 11:
                     $vless_config = VlessReality::getConfig($node_raw);
                     if (VlessReality::isEnabled($vless_config)) {
-                        if (! VlessReality::isConfigured($vless_config)) {
+                        // This legacy V2Ray JSON schema has no XHTTP mapping;
+                        // Xray clients should use the /vless or /v2ray URI.
+                        if (! VlessReality::isConfigured($vless_config) || VlessReality::isXHTTPReality($vless_config)) {
                             $node = [];
                             break;
                         }

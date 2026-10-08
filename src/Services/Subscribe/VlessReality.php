@@ -6,8 +6,10 @@ namespace App\Services\Subscribe;
 
 use App\Services\Subscribe;
 use App\Utils\Tools;
+use function array_merge;
 use function http_build_query;
 use function is_array;
+use function in_array;
 use function json_decode;
 use function rawurlencode;
 use function str_starts_with;
@@ -54,7 +56,15 @@ final class VlessReality extends Base
                 && str_starts_with(self::getWebSocketOptions($config)['path'], '/');
         }
 
-        return self::getNetwork($config) === 'tcp'
+        if (self::isXHTTPReality($config)) {
+            $options = self::getXHTTPOptions($config);
+            if (! str_starts_with($options['path'], '/')
+                || ! in_array($options['mode'], ['auto', 'stream-one', 'stream-up', 'packet-up'], true)) {
+                return false;
+            }
+        }
+
+        return in_array(self::getNetwork($config), ['tcp', 'xhttp'], true)
             && self::getSecurity($config) === 'reality'
             && self::getServerName($config) !== ''
             && self::getPublicKey($config) !== ''
@@ -63,7 +73,13 @@ final class VlessReality extends Base
 
     public static function getNetwork(array $config): string
     {
-        return strtolower((string) ($config['network'] ?? 'tcp'));
+        $network = strtolower((string) ($config['network'] ?? 'tcp'));
+
+        return match ($network) {
+            'raw' => 'tcp',
+            'splithttp' => 'xhttp',
+            default => $network,
+        };
     }
 
     public static function getSecurity(array $config): string
@@ -74,6 +90,28 @@ final class VlessReality extends Base
     public static function isWebSocketTLS(array $config): bool
     {
         return self::getNetwork($config) === 'ws' && self::getSecurity($config) === 'tls';
+    }
+
+    public static function isXHTTPReality(array $config): bool
+    {
+        return self::getNetwork($config) === 'xhttp' && self::getSecurity($config) === 'reality';
+    }
+
+    public static function getXHTTPOptions(array $config): array
+    {
+        $options = $config['xhttp-opts'] ?? $config['xhttp_opts'] ?? $config['xhttpSettings']
+            ?? $config['splithttpSettings'] ?? [];
+        $options = is_array($options) ? $options : [];
+        $result = [
+            'path' => (string) ($options['path'] ?? $config['path'] ?? '/xhttp'),
+            'mode' => (string) ($options['mode'] ?? $config['mode'] ?? 'auto'),
+        ];
+        $host = (string) ($options['host'] ?? $config['host'] ?? '');
+        if ($host !== '') {
+            $result['host'] = $host;
+        }
+
+        return $result;
     }
 
     public static function getWebSocketOptions(array $config): array
@@ -121,7 +159,7 @@ final class VlessReality extends Base
 
     public static function getFlow(array $config): string
     {
-        if (self::isWebSocketTLS($config)) {
+        if (self::isWebSocketTLS($config) || self::isXHTTPReality($config)) {
             return '';
         }
 
@@ -159,6 +197,10 @@ final class VlessReality extends Base
                 'path' => $ws_options['path'],
                 'fp' => self::getFingerprint($config),
             ];
+        } elseif (self::isXHTTPReality($config)) {
+            unset($query['flow']);
+            $query['type'] = 'xhttp';
+            $query = array_merge($query, self::getXHTTPOptions($config));
         }
 
         return 'vless://' . rawurlencode((string) $user->uuid)

@@ -84,6 +84,45 @@ Cloudflare 入口永远可达。此选项目前只作用于 Clash 订阅，其�
 现有 REALITY 配置继续可用。`network` 和 `security` 未设置时，默认 TCP + REALITY；
 仍需填写 `sni`、`public_key`、`short_id`，flow 默认 `xtls-rprx-vision`。
 
+## XHTTP + REALITY
+
+节点类型继续使用 V2Ray（`sort=11`），地址填源站 IP 或灰云域名。配置示例：
+
+```json
+{
+  "protocol": "vless",
+  "offset_port_user": 443,
+  "offset_port_node": 443,
+  "network": "xhttp",
+  "security": "reality",
+  "flow": "",
+  "sni": "www.example.com",
+  "fingerprint": "chrome",
+  "public_key": "替换为原 REALITY 公钥",
+  "short_id": "替换为原 REALITY Short ID",
+  "path": "/xhttp",
+  "mode": "auto",
+  "udp": true
+}
+```
+
+路径、模式、公钥和 Short ID 与服务端保持一致；可选 `host` 指定同一 XHTTP Host。
+默认路径 `/xhttp`、模式 `auto`，支持 `stream-one`、`stream-up`、`packet-up`。
+兼容 `splithttp` 网络别名以及 `xhttp-opts`、`xhttp_opts`、`xhttpSettings`、
+`splithttpSettings` 中的基本 path/mode/host 字段。
+即使误保留 `flow=xtls-rprx-vision`，导出 XHTTP 时也会省略 flow。
+
+Clash/Mihomo 输出 `network: xhttp`、`xhttp-opts` 和原有 REALITY 密钥；
+Shadowrocket 需更新至支持 XHTTP 及其 Clash 参数解析的版本。
+`/vless` 和 `/v2ray` 输出携带 path/mode/host 的 XHTTP URI。
+官方 sing-box 暂无 XHTTP 传输，旧 V2Ray JSON 导出也没有对应 schema，
+`/singbox`、`/v2rayjson` 跳过此类节点，其他已有节点照常输出。
+
+本配置仍为源站直连，不使用普通 Cloudflare 橙云。SNI 是 REALITY 目标域名，
+不要拿它替换节点连接地址。
+参考：[Xray XHTTP](https://github.com/XTLS/Xray-core/discussions/4113)、
+[Mihomo XHTTP](https://wiki.metacubex.one/config/proxies/transport/#xhttp-opts)。
+
 ## 订阅输出
 
 - Shadowrocket / VLESS URI：`/sub/{token}/vless`
