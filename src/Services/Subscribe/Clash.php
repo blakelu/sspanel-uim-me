@@ -7,6 +7,7 @@ namespace App\Services\Subscribe;
 use App\Services\Subscribe;
 use App\Utils\Tools;
 use function array_merge;
+use function is_array;
 use function json_decode;
 use function yaml_emit;
 use const YAML_UTF8_ENCODING;
@@ -144,6 +145,60 @@ final class Clash extends Base
                         break;
                     }
 
+                    if (Vless::enabled($node_custom_config)) {
+                        $client = $this->vlessClient($node_raw, $node_custom_config);
+                        if ($client === null) {
+                            continue 2;
+                        }
+                        $node = [
+                            'name' => $node_raw->name,
+                            'type' => 'vless',
+                            'server' => $node_raw->server,
+                            'port' => $client['port'],
+                            'uuid' => $user->uuid,
+                            'network' => $client['network'],
+                            'tls' => $client['security'] !== 'none',
+                            'udp' => (bool) ($node_custom_config['udp'] ?? true),
+                        ];
+                        if ($client['flow'] !== '') {
+                            $node['flow'] = $client['flow'];
+                        }
+                        if ($client['security'] === 'reality') {
+                            $node['servername'] = $client['server_name'];
+                            $node['client-fingerprint'] = $client['fingerprint'];
+                            $node['reality-opts'] = [
+                                'public-key' => $client['public_key'],
+                                'short-id' => $client['short_id'],
+                            ];
+                            // Xray-core 26.9+ REALITY servers require the hybrid key share; older servers reject it.
+                            if ($client['x25519mlkem768']) {
+                                $node['reality-opts']['support-x25519mlkem768'] = true;
+                            }
+                        } elseif ($client['security'] === 'tls') {
+                            $node['servername'] = $client['server_name'];
+                            $node['skip-cert-verify'] = $client['allow_insecure'];
+                        }
+                        if (in_array($client['network'], ['ws', 'httpupgrade'], true)) {
+                            $node['network'] = 'ws';
+                            $node['ws-opts'] = [
+                                'path' => $node_custom_config['path'] ?? '/',
+                                'headers' => ['Host' => $node_custom_config['host'] ?? ''],
+                            ];
+                            if ($client['network'] === 'httpupgrade') {
+                                $node['ws-opts']['v2ray-http-upgrade'] = true;
+                            }
+                        } elseif ($client['network'] === 'grpc') {
+                            $node['grpc-opts'] = ['grpc-service-name' => $node_custom_config['servicename'] ?? ''];
+                        } elseif ($client['network'] === 'xhttp') {
+                            $node['xhttp-opts'] = [
+                                'host' => $node_custom_config['host'] ?? '',
+                                'path' => $node_custom_config['path'] ?? '/',
+                                'mode' => 'auto',
+                            ];
+                        }
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ??
                         ($node_custom_config['offset_port_node'] ?? 443);
                     $security = $node_custom_config['security'] ?? 'none';
@@ -159,9 +214,24 @@ final class Clash extends Base
                     $h2_opts = $node_custom_config['h2-opts'] ?? $node_custom_config['h2_opts'] ?? null;
                     $http_opts = $node_custom_config['http-opts'] ?? $node_custom_config['http_opts'] ?? null;
                     $grpc_opts = $node_custom_config['grpc-opts'] ?? $node_custom_config['grpc_opts'] ?? null;
+                    if ($network === 'ws' || $network === 'httpupgrade') {
+                        $ws_opts = is_array($ws_opts) ? $ws_opts : [];
+                        $ws_opts += [
+                            'path' => $node_custom_config['header']['request']['path'][0] ?? $node_custom_config['path'] ?? '/',
+                        ];
+                        if ($host !== '') {
+                            $ws_opts['headers'] = (is_array($ws_opts['headers'] ?? null) ? $ws_opts['headers'] : []) + ['Host' => $host];
+                        }
+                    }
                     // HTTPUpgrade 在 Clash.Meta 内核中属于 ws 类型
                     if ($network === 'httpupgrade') {
                         $network = 'ws';
+                        $ws_opts += ['v2ray-http-upgrade' => true];
+                    }
+                    if ($network === 'grpc') {
+                        $grpc_opts = (is_array($grpc_opts) ? $grpc_opts : []) + [
+                            'grpc-service-name' => $node_custom_config['servicename'] ?? '',
+                        ];
                     }
 
                     $node = [
@@ -215,33 +285,40 @@ final class Clash extends Base
 
                     break;
                 case 15:
-                    $hysteria2_config = Hysteria2::getConfig($node_raw);
-                    $obfs = Hysteria2::getObfs($hysteria2_config);
-                    $obfs_password = Hysteria2::getObfsPassword($hysteria2_config);
-                    $up_mbps = (int) ($hysteria2_config['up_mbps'] ?? 0);
-                    $down_mbps = (int) ($hysteria2_config['down_mbps'] ?? 0);
+                    $hy2 = Hysteria2::config($node_raw);
+                    if ($hy2 === null) {
+                        $node = [];
+
+                        break;
+                    }
 
                     $node = [
                         'name' => $node_raw->name,
                         'type' => 'hysteria2',
-                        'server' => $node_raw->server,
-                        'port' => Hysteria2::getPort($hysteria2_config),
+                        'server' => $hy2['server'],
+                        'port' => $hy2['port'],
                         'password' => $user->uuid,
-                        'sni' => Hysteria2::getSNI($node_raw, $hysteria2_config),
-                        'skip-cert-verify' => Hysteria2::isInsecure($hysteria2_config),
+                        'sni' => $hy2['sni'],
+                        'skip-cert-verify' => $hy2['insecure'],
                     ];
 
-                    if ($obfs !== '') {
-                        $node['obfs'] = $obfs;
-                        if ($obfs_password !== '') {
-                            $node['obfs-password'] = $obfs_password;
+                    if ($hy2['obfs'] !== 'none' && $hy2['obfs'] !== '') {
+                        $node['obfs'] = $hy2['obfs'];
+                        if ($hy2['obfs_password'] !== '') {
+                            $node['obfs-password'] = $hy2['obfs_password'];
                         }
                     }
-                    if ($up_mbps > 0) {
-                        $node['up'] = $up_mbps . ' Mbps';
+                    if ($hy2['up'] !== null) {
+                        $node['up'] = $hy2['up'];
                     }
-                    if ($down_mbps > 0) {
-                        $node['down'] = $down_mbps . ' Mbps';
+                    if ($hy2['down'] !== null) {
+                        $node['down'] = $hy2['down'];
+                    }
+                    if ($hy2['hop_enabled']) {
+                        $node['ports'] = $hy2['ports'];
+                    }
+                    if ($hy2['hop_interval'] !== null) {
+                        $node['hop-interval'] = $hy2['hop_interval'];
                     }
 
                     break;

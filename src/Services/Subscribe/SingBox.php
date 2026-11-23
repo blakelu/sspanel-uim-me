@@ -7,9 +7,13 @@ namespace App\Services\Subscribe;
 use App\Services\Subscribe;
 use App\Utils\Tools;
 use function array_filter;
+use function array_map;
 use function array_merge;
+use function explode;
 use function json_decode;
 use function json_encode;
+use function str_replace;
+use function trim;
 
 final class SingBox extends Base
 {
@@ -132,6 +136,58 @@ final class SingBox extends Base
                         break;
                     }
 
+                    if (Vless::enabled($node_custom_config)) {
+                        $client = $this->vlessClient($node_raw, $node_custom_config);
+                        if ($client === null) {
+                            continue 2;
+                        }
+                        // Official sing-box has no XHTTP transport; omit rather than emit an invalid outbound.
+                        if ($client['network'] === 'xhttp') {
+                            $node = [];
+                            break;
+                        }
+                        $node = [
+                            'type' => 'vless',
+                            'tag' => $node_raw->name,
+                            'server' => $node_raw->server,
+                            'server_port' => $client['port'],
+                            'uuid' => $user->uuid,
+                        ];
+                        if ($client['flow'] !== '') {
+                            $node['flow'] = $client['flow'];
+                        }
+                        if ($client['security'] !== 'none') {
+                            $node['tls'] = [
+                                'enabled' => true,
+                                'server_name' => $client['server_name'],
+                            ];
+                            if ($client['security'] === 'reality') {
+                                $node['tls']['utls'] = ['enabled' => true, 'fingerprint' => $client['fingerprint']];
+                                $node['tls']['reality'] = [
+                                    'enabled' => true,
+                                    'public_key' => $client['public_key'],
+                                    'short_id' => $client['short_id'],
+                                ];
+                            } else {
+                                $node['tls']['insecure'] = $client['allow_insecure'];
+                            }
+                        }
+                        if ($client['network'] !== 'tcp') {
+                            $node['transport'] = ['type' => $client['network']];
+                            if ($client['network'] === 'ws' || $client['network'] === 'httpupgrade') {
+                                $node['transport']['path'] = $node_custom_config['path'] ?? '/';
+                                if ($client['network'] === 'httpupgrade') {
+                                    $node['transport']['host'] = $node_custom_config['host'] ?? '';
+                                } else {
+                                    $node['transport']['headers'] = ['Host' => $node_custom_config['host'] ?? ''];
+                                }
+                            } elseif ($client['network'] === 'grpc') {
+                                $node['transport']['service_name'] = $node_custom_config['servicename'] ?? '';
+                            }
+                        }
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ??
                         ($node_custom_config['offset_port_node'] ?? 443);
                     $transport = ($node_custom_config['network'] ?? '') === 'tcp' ? '' : $node_custom_config['network'];
@@ -139,6 +195,9 @@ final class SingBox extends Base
                         $node_custom_config['host'] ?? '';
                     $path = $node_custom_config['header']['request']['path'][0] ?? $node_custom_config['path'] ?? '';
                     $headers = $node_custom_config['header']['request']['headers'] ?? [];
+                    if ($transport === 'ws' && $host !== '') {
+                        $headers += ['Host' => $host];
+                    }
                     $service_name = $node_custom_config['servicename'] ?? '';
                     $utls = $node_custom_config['utls'] ?? false;
                     $method = $node_custom_config['method'] ?? '';
@@ -151,11 +210,12 @@ final class SingBox extends Base
                         'server' => $node_raw->server,
                         'server_port' => (int) $v2_port,
                         'uuid' => $user->uuid,
-                        'security' => 'auto',
+                        'security' => $node_custom_config['encryption'] ?? 'auto',
                         'alter_id' => 0,
                         'tls' => [
                             'enabled' => true,
                             'server_name' => $host,
+                            'insecure' => (bool) ($node_custom_config['allow_insecure'] ?? false),
                             'utls' => [
                                 'enabled' => $utls,
                                 'fingerprint' => 'chrome',
@@ -166,6 +226,7 @@ final class SingBox extends Base
                         'authenticated_length' => true,
                         'transport' => [
                             'type' => $transport,
+                            'host' => $transport === 'httpupgrade' ? $host : '',
                             'path' => $path,
                             'method' => $method,
                             'headers' => $headers,
@@ -177,6 +238,9 @@ final class SingBox extends Base
 
                     $node['tls'] = array_filter($node['tls']);
                     $node['transport'] = array_filter($node['transport']);
+                    if (($node_custom_config['security'] ?? 'none') !== 'tls') {
+                        unset($node['tls']);
+                    }
 
                     break;
                 case 14:
@@ -213,36 +277,47 @@ final class SingBox extends Base
 
                     break;
                 case 15:
-                    $hysteria2_config = Hysteria2::getConfig($node_raw);
-                    $obfs = Hysteria2::getObfs($hysteria2_config);
-                    $obfs_password = Hysteria2::getObfsPassword($hysteria2_config);
-                    $up_mbps = (int) ($hysteria2_config['up_mbps'] ?? 0);
-                    $down_mbps = (int) ($hysteria2_config['down_mbps'] ?? 0);
+                    $hy2 = Hysteria2::config($node_raw);
+                    if ($hy2 === null) {
+                        $node = [];
+
+                        break;
+                    }
 
                     $node = [
                         'type' => 'hysteria2',
                         'tag' => $node_raw->name,
-                        'server' => $node_raw->server,
-                        'server_port' => Hysteria2::getPort($hysteria2_config),
+                        'server' => $hy2['server'],
+                        'server_port' => $hy2['port'],
                         'password' => $user->uuid,
                         'tls' => [
                             'enabled' => true,
-                            'server_name' => Hysteria2::getSNI($node_raw, $hysteria2_config),
-                            'insecure' => Hysteria2::isInsecure($hysteria2_config),
+                            'server_name' => $hy2['sni'],
+                            'insecure' => $hy2['insecure'],
                         ],
                     ];
 
-                    if ($obfs !== '') {
+                    if ($hy2['obfs'] !== 'none' && $hy2['obfs'] !== '') {
                         $node['obfs'] = [
-                            'type' => $obfs,
-                            'password' => $obfs_password,
+                            'type' => $hy2['obfs'],
+                            'password' => $hy2['obfs_password'],
                         ];
                     }
-                    if ($up_mbps > 0) {
-                        $node['up_mbps'] = $up_mbps;
+                    if ($hy2['up_mbps'] !== null) {
+                        $node['up_mbps'] = $hy2['up_mbps'];
                     }
-                    if ($down_mbps > 0) {
-                        $node['down_mbps'] = $down_mbps;
+                    if ($hy2['down_mbps'] !== null) {
+                        $node['down_mbps'] = $hy2['down_mbps'];
+                    }
+                    if ($hy2['hop_enabled']) {
+                        unset($node['server_port']);
+                        $node['server_ports'] = array_map(
+                            static fn (string $range): string => str_replace('-', ':', trim($range)),
+                            explode(',', $hy2['ports'])
+                        );
+                    }
+                    if ($hy2['hop_interval'] !== null) {
+                        $node['hop_interval'] = $hy2['hop_interval'] . 's';
                     }
 
                     break;

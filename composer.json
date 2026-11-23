@@ -1,12 +1,20 @@
 {
+    "name": "anankke/sspanel-uim",
+    "description": "Multi-functional proxy service management system supporting Shadowsocks(2022), V2Ray, Trojan and TUIC protocols",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anankke",
+            "homepage": "https://github.com/Anankke"
+        }
+    ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "ext-bcmath": "*",
         "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "ext-mysqli": "*",
         "ext-openssl": "*",
         "ext-pdo": "*",
         "ext-posix": "*",
@@ -15,14 +23,14 @@
         "ext-yaml": "*",
         "ext-zip": "*",
         "alibabacloud/dm-20170622": "^1",
-        "alipaysdk/openapi": "*@dev",
+        "alipaysdk/openapi": "dev-master",
         "aws/aws-sdk-php": "^3",
         "danielsreichenbach/geoip2-update": "^2",
         "geoip2/geoip2": "^3",
         "guzzlehttp/guzzle": "^7",
         "guzzlehttp/psr7": "^2",
-        "illuminate/database": "^11",
-        "illuminate/pagination": "^11",
+        "illuminate/database": "^13",
+        "illuminate/pagination": "^13",
         "irazasyed/telegram-bot-sdk": "^3",
         "lcobucci/jwt": "^5",
         "league/html-to-markdown": "^5",
@@ -31,40 +39,51 @@
         "monolog/monolog": "^3",
         "nikolaposa/rate-limit": "^3",
         "openai-php/client": "^0",
-        "phpmailer/phpmailer": "^6",
+        "phpmailer/phpmailer": "^7",
         "postal/postal": "^2",
         "ramsey/uuid": "^4",
-        "resend/resend-php": "^0.12.0",
+        "resend/resend-php": "^0.18.1",
         "sendgrid/sendgrid": "^8",
         "sentry/sdk": "^4",
         "slim/http": "^1",
         "slim/slim": "^4",
         "smarty/smarty": "^5",
         "srmklive/paypal": "^3",
-        "stripe/stripe-php": "^15",
+        "stripe/stripe-php": "^22",
         "symfony/http-client": "^7",
         "symfony/translation": "^7",
         "twig/twig": "^3",
         "vectorface/googleauthenticator": "^3",
-        "voku/anti-xss": "^4"
+        "voku/anti-xss": "^4",
+        "web-auth/webauthn-framework": "^5.2"
     },
     "autoload": {
         "psr-4": {
             "App\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "config": {
         "sort-packages": true,
+        "platform": {
+            "php": "8.4.1"
+        },
         "optimize-autoloader": true,
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
         }
     },
     "require-dev": {
         "dg/bypass-finals": "^1",
         "nunomaduro/phpinsights": "*",
-        "phpunit/phpunit": "^10|^11"
+        "pestphp/pest": "^5.0",
+        "phpunit/phpunit": "^13.0"
     },
     "scripts": {
         "update-dev-windows": [

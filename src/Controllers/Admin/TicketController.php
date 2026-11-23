@@ -22,7 +22,6 @@ use function array_merge;
 use function count;
 use function json_decode;
 use function json_encode;
-use function nl2br;
 use function time;
 
 final class TicketController extends BaseController
@@ -73,7 +72,7 @@ final class TicketController extends BaseController
                 'comment_id' => $content_old[count($content_old) - 1]['comment_id'] + 1,
                 'commenter_type' => 'admin',
                 'commenter_name' => 'Admin',
-                'comment' => $comment,
+                'comment' => $this->antiXss->xss_clean($comment),
                 'datetime' => time(),
             ],
         ];
@@ -140,7 +139,7 @@ final class TicketController extends BaseController
                 'comment_id' => $content_old[count($content_old) - 1]['comment_id'] + 1,
                 'commenter_type' => 'llm',
                 'commenter_name' => 'AI Assistant',
-                'comment' => $llm_response,
+                'comment' => $this->antiXss->xss_clean($llm_response),
                 'datetime' => time(),
             ],
         ];
@@ -179,7 +178,6 @@ final class TicketController extends BaseController
         $comments = json_decode($ticket->content);
 
         foreach ($comments as $comment) {
-            $comment->comment = nl2br($comment->comment);
             $comment->datetime = Tools::toDateTime((int) $comment->datetime);
         }
 

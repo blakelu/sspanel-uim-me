@@ -7,6 +7,7 @@ namespace App\Services\Bot\Telegram;
 use App\Models\Config;
 use App\Models\User;
 use App\Services\I18n;
+use App\Services\IM\ImType;
 use GuzzleHttp\Exception\GuzzleException;
 use Telegram\Bot\Api;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -136,8 +137,8 @@ final class Message
 
             if (Config::obtain('enable_welcome_message')) {
                 $text = ($new_user->class > 0 ?
-                    I18n::trans('user_join_welcome_paid', $_ENV['locale']) :
-                    I18n::trans('user_join_welcome_free', $_ENV['locale']));
+                    I18n::trans('bot.user_join_welcome_paid', $_ENV['locale']) :
+                    I18n::trans('bot.user_join_welcome_free', $_ENV['locale']));
 
                 $this->replyWithMessage(
                     [
@@ -210,6 +211,6 @@ final class Message
      */
     public static function getUser(int $value): null|User
     {
-        return (new User())->where('im_type', 4)->where('im_value', $value)->first();
+        return (new User())->where('im_type', ImType::Telegram->value)->where('im_value', $value)->first();
     }
 }

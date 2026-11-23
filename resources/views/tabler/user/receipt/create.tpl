@@ -7,7 +7,7 @@
                 <div class="col">
                     <h2 class="page-title"><span class="home-title">开收据</span></h2>
                     <div class="page-pretitle my-3">
-                        <span class="home-subtitle">订单 #{$order->id} · {$order->product_name|escape}</span>
+                        <span class="home-subtitle">订单 #{$order->id} · {$order->product_name}</span>
                     </div>
                 </div>
             </div>
@@ -18,7 +18,7 @@
             <div class="row justify-content-center">
                 <div class="col-lg-9">
                     <div class="alert alert-info">
-                        收据由 <strong>{$seller_name|escape}</strong> 开具，提交后买方信息和订单金额将作为历史快照保存，不能自行修改。
+                        收据由 <strong>{$seller_name}</strong> 开具，提交后买方信息和订单金额将作为历史快照保存，不能自行修改。
                     </div>
                     <form class="card" hx-post="/user/order/{$order->id}/receipt/create" hx-swap="none">
                         <div class="card-header">
@@ -52,7 +52,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="buyer_email">电子邮箱</label>
                                     <input class="form-control" type="email" id="buyer_email" name="buyer_email"
-                                           maxlength="255" value="{$user->email|escape}" autocomplete="email">
+                                           maxlength="255" value="{$user->email}" autocomplete="email">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label" for="buyer_address">地址</label>

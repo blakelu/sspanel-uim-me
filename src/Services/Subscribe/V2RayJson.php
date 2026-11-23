@@ -117,6 +117,12 @@ final class V2RayJson extends Base
                         break;
                     }
 
+                    // The VLESS outbound needs Xray's config format while this template is v2fly v5.
+                    if (Vless::enabled($node_custom_config)) {
+                        $node = [];
+                        break;
+                    }
+
                     $v2_port = $node_custom_config['offset_port_user'] ?? ($node_custom_config['offset_port_node'] ?? 443);
                     $security = $node_custom_config['security'] ?? 'none';
                     $transport = $node_custom_config['network'] ?? 'tcp';
@@ -157,7 +163,7 @@ final class V2RayJson extends Base
                             'security' => $security,
                             'securitySettings' => [
                                 'tls' => [
-                                    'server_name' => $security === ('tls' || 'auto') ? $host : '',
+                                    'server_name' => $security === 'tls' ? $host : '',
                                 ],
                             ],
                         ],

@@ -6,11 +6,12 @@ namespace App\Controllers\User;
 
 use App\Controllers\BaseController;
 use App\Models\Config;
+use App\Models\MFADevice;
 use App\Models\User;
 use App\Services\Auth;
 use App\Services\Cache;
 use App\Services\Filter;
-use App\Services\MFA;
+use App\Services\IM\ImType;
 use App\Utils\Hash;
 use App\Utils\ResponseHelper;
 use App\Utils\Tools;
@@ -34,14 +35,21 @@ final class InfoController extends BaseController
     {
         $themes = Tools::getDir(BASE_PATH . '/resources/views');
         $methods = Tools::getSsMethod();
-        $ga_url = MFA::getGaUrl($this->user);
+        $webauthnDevices = array_map(static fn ($item) => (object) $item, (new MFADevice())->where('userid', $this->user->id)->where('type', 'passkey')->get()->toArray());
+        $totpDevices = array_map(static fn ($item) => (object) $item, (new MFADevice())->where('userid', $this->user->id)->where('type', 'totp')->get()->toArray());
+        $fidoDevices = array_map(static fn ($item) => (object) $item, (new MFADevice())->where('userid', $this->user->id)->where('type', 'fido')->get()->toArray());
 
-        return $response->write($this->view()
-            ->assign('user', $this->user)
-            ->assign('themes', $themes)
-            ->assign('methods', $methods)
-            ->assign('ga_url', $ga_url)
-            ->fetch('user/edit.tpl'));
+        return $response->write(
+            $this->view()
+                ->assign('user', $this->user)
+                ->assign('themes', $themes)
+                ->assign('im_types', ImType::map())
+                ->assign('methods', $methods)
+                ->assign('webauthnDevices', $webauthnDevices)
+                ->assign('totpDevices', $totpDevices)
+                ->assign('fidoDevices', $fidoDevices)
+                ->fetch('user/edit.tpl')
+        );
     }
 
     /**

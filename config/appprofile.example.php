@@ -43,6 +43,9 @@ $_ENV['V2RayJson_Config'] = [
     'outbounds' => [],
 ];
 
+//sing-box 的 override_android_vpn 仅 Android 支持，按订阅客户端 User Agent 判断
+$isSfaVisitor = str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', 'SFA');
+
 $_ENV['SingBox_Config'] = [
     'log' => [
         'disabled' => false,
@@ -61,6 +64,7 @@ $_ENV['SingBox_Config'] = [
                 'type' => 'quic',
                 'server' => '223.6.6.6',
                 'server_port' => 853,
+                //'domain_resolver' => 'local',
                 //'detour' => 'direct',
             ],
             [
@@ -68,6 +72,7 @@ $_ENV['SingBox_Config'] = [
                 'type' => 'tls',
                 'server' => '1.1.1.1',
                 'server_port' => 853,
+                //'domain_resolver' => 'local',
                 'detour' => 'select',
             ],
             [
@@ -75,6 +80,7 @@ $_ENV['SingBox_Config'] = [
                 'type' => 'tls',
                 'server' => '8.8.8.8',
                 'server_port' => 853,
+                //'domain_resolver' => 'local',
                 'detour' => 'select',
             ],
             [
@@ -82,6 +88,7 @@ $_ENV['SingBox_Config'] = [
                 'type' => 'tls',
                 'server' => '208.67.222.222',
                 'server_port' => 853,
+                //'domain_resolver' => 'local',
                 'detour' => 'select',
             ],
             [
@@ -138,25 +145,37 @@ $_ENV['SingBox_Config'] = [
                 'server' => 'fakeip',
             ],
             [
-                'type' => 'logical',
-                'mode' => 'and',
-                'rules' => [
-                    [
-                        'rule_set' => [
-                            'geosite-geolocation-!cn',
-                        ],
-                        'invert' => true,
-                    ],
-                    [
-                        'rule_set' => [
-                            'geoip-cn',
-                        ],
-                    ],
+                'rule_set' => [
+                    'geosite-geolocation-!cn',
+                ],
+                'server' => 'fakeip',
+                'disable_cache' => true,
+            ],
+            [
+                'action' => 'evaluate',
+                'server' => $_ENV['dns_select'],
+                'disable_cache' => true,
+                'client_subnet' => '111.222.0.0',
+            ],
+            [
+                'match_response' => true,
+                'rule_set' => [
+                    'geoip-cn',
                 ],
                 'action' => 'route',
                 'server' => $_ENV['dns_select'],
                 'disable_cache' => true,
                 'client_subnet' => '111.222.0.0',
+            ],
+            [
+                'match_response' => true,
+                'rule_set' => [
+                    'geoip-cn',
+                ],
+                'invert' => true,
+                'action' => 'route',
+                'server' => 'fakeip',
+                'disable_cache' => true,
             ],
             [
                 'clash_mode' => 'Rule',
@@ -169,7 +188,7 @@ $_ENV['SingBox_Config'] = [
         ],
         'final' => 'cloudflare',
         'disable_cache' => true,
-        'independent_cache' => true,
+        //'independent_cache' => true,
     ],
     'inbounds' => [
         [
@@ -182,7 +201,7 @@ $_ENV['SingBox_Config'] = [
             'auto_route' => true,
             'strict_route' => true,
             'udp_timeout' => 60,
-            'stack' => 'mixed',
+            //'stack' => 'mixed',
         ],
     ],
     'outbounds' => [
@@ -203,17 +222,6 @@ $_ENV['SingBox_Config'] = [
             'interval' => '3m',
             'tolerance' => 50,
             'idle_timeout' => '30m',
-            'interrupt_exist_connections' => true,
-        ],
-        [
-            'tag' => 'rules_download',
-            'type' => 'selector',
-            'outbounds' => [
-                'select',
-                'auto',
-                'direct',
-            ],
-            'default' => 'select',
             'interrupt_exist_connections' => true,
         ],
         [
@@ -338,64 +346,99 @@ $_ENV['SingBox_Config'] = [
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geoip@rule-set/geoip-cn.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-cn',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-cn.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-category-ads-all',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-geolocation-cn',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-geolocation-cn.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-geolocation-!cn',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-geolocation-!cn.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-netease',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-netease.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
             [
                 'tag' => 'geosite-bilibili',
                 'type' => 'remote',
                 'format' => 'binary',
                 'url' => 'https://' . $_ENV['jsdelivr_url'] . '/gh/SagerNet/sing-geosite@rule-set/geosite-bilibili.srs',
-                'download_detour' => 'rules_download',
                 'update_interval' => '1d',
+                'http_client' => [
+                    'engine' => 'go',
+                    'version' => 2,
+                    'disable_version_fallback' => false,
+                    'detour' => 'select',
+                ],
             ],
         ],
         'final' => 'select',
         'auto_detect_interface' => true,
-        'override_android_vpn' => true,
+        'override_android_vpn' => $isSfaVisitor,
         'default_domain_resolver' => [
             'server' => 'local',
-            'rewrite_tll' => 60,
+            'rewrite_ttl' => 60,
         ],
     ],
     'experimental' => [

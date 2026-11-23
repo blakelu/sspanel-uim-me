@@ -9,18 +9,17 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Paylist;
 use App\Models\User;
-use App\Models\UserMoneyLog;
 use App\Services\DB;
 use App\Services\OrderActivation;
 use App\Services\Reward;
+use App\Services\Wallet;
 use App\Utils\Tools;
 use Psr\Http\Message\ResponseInterface;
-use RuntimeException;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest;
 use voku\helper\AntiXSS;
-use function bcadd;
 use function bccomp;
+use function bcsub;
 use function get_called_class;
 use function in_array;
 use function json_decode;
@@ -58,70 +57,68 @@ abstract class Base
 
     public function postPayment(string $trade_no): void
     {
-        $orderId = DB::connection('default')->transaction(static function () use ($trade_no): ?int {
-            $paylist = (new Paylist())->where('tradeno', $trade_no)->lockForUpdate()->first();
+        $attempt = (new Paylist())->where('tradeno', $trade_no)->first(['id', 'invoice_id']);
+
+        if ($attempt === null) {
+            return;
+        }
+
+        $orderId = DB::connection()->transaction(static function () use ($attempt): ?int {
+            $invoice = (new Invoice())->lockForUpdate()->find($attempt->invoice_id);
+            $paylist = (new Paylist())->lockForUpdate()->find($attempt->id);
 
             if ($paylist === null) {
-                throw new RuntimeException('Payment record not found: ' . $trade_no);
-            }
-
-            $invoice = (new Invoice())->where('id', $paylist->invoice_id)->lockForUpdate()->first();
-
-            if ($invoice === null) {
-                throw new RuntimeException('Invoice not found for payment: ' . $trade_no);
-            }
-
-            if ((int) $paylist->status === 0) {
-                $paylist->datetime = time();
-                $paylist->status = 1;
-                $paylist->save();
-            }
-
-            $newlyPaid = in_array($invoice->status, ['unpaid', 'partially_paid']) &&
-                bccomp((string) $paylist->total, (string) $invoice->price, 2) >= 0;
-
-            if ($newlyPaid) {
-                $invoice->status = 'paid_gateway';
-                $invoice->update_time = time();
-                $invoice->pay_time = time();
-                $invoice->save();
-            }
-
-            if (! $newlyPaid && $invoice->status !== 'paid_gateway') {
                 return null;
             }
 
-            $order = (new Order())->where('id', $invoice->order_id)->lockForUpdate()->first();
+            // 网关重复通知时只重试尚未完成的订单激活。
+            if ($paylist->status === 0) {
+                $paylist->datetime = time();
+                $paylist->status = 1;
+                $paylist->save();
 
-            if ($order !== null && $order->status === 'pending_payment') {
+                $total = (string) $paylist->total;
+
+                if ($invoice?->acceptsPayment() !== true) {
+                    Wallet::credit(
+                        $paylist->userid,
+                        $total,
+                        '账单 #' . $paylist->invoice_id . ' 已不收款，支付 ' . $paylist->tradeno . ' 转入余额'
+                    );
+                } else {
+                    $price = (string) $invoice->price;
+                    $comparison = bccomp($total, $price, 2);
+
+                    if ($comparison >= 0) {
+                        $invoice->status = 'paid_gateway';
+                        $invoice->update_time = time();
+                        $invoice->pay_time = time();
+                        $invoice->save();
+                    }
+
+                    if ($comparison > 0) {
+                        Wallet::credit($paylist->userid, bcsub($total, $price, 2), '超额支付账单 #' . $invoice->id);
+                    }
+                }
+
+                $user = (new User())->find($paylist->userid);
+                if ($user !== null && $user->ref_by > 0 && Config::obtain('invite_mode') === 'reward') {
+                    Reward::issuePaybackReward($user->id, $user->ref_by, $invoice?->price, $paylist->invoice_id);
+                }
+            }
+
+            if ($invoice?->status !== 'paid_gateway') {
+                return null;
+            }
+
+            $order = (new Order())->lockForUpdate()->find($invoice->order_id);
+            if ($order?->status === 'pending_payment') {
                 $order->status = 'pending_activation';
                 $order->update_time = time();
                 $order->save();
             }
 
-            if ($newlyPaid) {
-                $user = (new User())->where('id', $paylist->userid)->lockForUpdate()->first();
-
-                if ($user !== null && bccomp((string) $paylist->total, (string) $invoice->price, 2) > 0) {
-                    $overpaid = bcadd((string) $paylist->total, '-' . (string) $invoice->price, 2);
-                    $moneyBefore = (string) $user->money;
-                    $user->money = bcadd($moneyBefore, $overpaid, 2);
-                    $user->save();
-                    (new UserMoneyLog())->add(
-                        $user->id,
-                        (float) $moneyBefore,
-                        (float) $user->money,
-                        (float) $overpaid,
-                        '超额支付账单 #' . $invoice->id
-                    );
-                }
-
-                if ($user !== null && $user->ref_by > 0 && Config::obtain('invite_mode') === 'reward') {
-                    Reward::issuePaybackReward($user->id, $user->ref_by, $invoice->price, $paylist->invoice_id);
-                }
-            }
-
-            return $order === null ? null : (int) $order->id;
+            return $order?->status === 'pending_activation' ? (int) $order->id : null;
         }, 3);
 
         if ($orderId !== null) {

@@ -314,33 +314,42 @@ final class Cron
 
     public static function processPendingOrder(): void
     {
-        $pending_payment_orders = (new Order())->where('status', 'pending_payment')->get();
+        $orderIds = (new Order())->where('status', 'pending_payment')->pluck('id');
 
-        foreach ($pending_payment_orders as $order) {
-            // 检查账单支付状态
-            $invoice = (new Invoice())->where('order_id', $order->id)->first();
+        foreach ($orderIds as $orderId) {
+            $status = DB::connection()->transaction(static function () use ($orderId): ?string {
+                // 支付回调也先锁住账单，再锁住订单。
+                $invoice = (new Invoice())->where('order_id', $orderId)->lockForUpdate()->first();
+                if ($invoice === null) {
+                    return null;
+                }
 
-            if ($invoice === null) {
-                continue;
-            }
-            // 标记订单为等待激活
-            if (in_array($invoice->status, ['paid_gateway', 'paid_balance', 'paid_admin'])) {
-                $order->status = 'pending_activation';
+                $order = (new Order())->lockForUpdate()->find($orderId);
+                if ($order?->status !== 'pending_payment') {
+                    return null;
+                }
+
+                if (in_array($invoice->status, ['paid_gateway', 'paid_balance', 'paid_admin'], true)) {
+                    $order->status = 'pending_activation';
+                } elseif ($invoice->status === 'unpaid' && $order->create_time + 86400 < time()) {
+                    $order->status = 'cancelled';
+                    $invoice->status = 'cancelled';
+                    $invoice->update_time = time();
+                    $invoice->save();
+                } else {
+                    return null;
+                }
+
                 $order->update_time = time();
                 $order->save();
-                echo "已标记订单 #{$order->id} 为等待激活。\n";
-                continue;
-            }
-            // 取消超时未支付的订单和关联账单，跳过账单已经部分支付的订单
-            if ($order->create_time + 86400 < time() && $invoice->status !== 'partially_paid') {
-                $order->status = 'cancelled';
-                $order->update_time = time();
-                $order->save();
-                echo "已取消超时订单 #{$order->id}。\n";
-                $invoice->status = 'cancelled';
-                $invoice->update_time = time();
-                $invoice->save();
-                echo "已取消超时账单 #{$invoice->id}。\n";
+
+                return $order->status;
+            }, 3);
+
+            if ($status === 'pending_activation') {
+                echo "已标记订单 #{$orderId} 为等待激活。\n";
+            } elseif ($status === 'cancelled') {
+                echo "已取消超时订单 #{$orderId} 及关联账单。\n";
             }
         }
 

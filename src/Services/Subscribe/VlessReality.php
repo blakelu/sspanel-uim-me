@@ -28,7 +28,16 @@ final class VlessReality extends Base
                 continue;
             }
 
-            $uri = self::buildURI($node, $user);
+            $config = self::getConfig($node);
+            if (self::isEnabled($config)) {
+                $uri = self::buildURI($node, $user);
+            } elseif (Vless::enabled($config)) {
+                $client = $this->vlessClient($node, $config);
+                $uri = $client === null ? '' : Vless::uri($node, $user, $config, $client);
+            } else {
+                continue;
+            }
+
             if ($uri !== '') {
                 $links .= $uri . PHP_EOL;
             }

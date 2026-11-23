@@ -2,10 +2,12 @@ version: 2
 updates:
   - package-ecosystem: "composer"
     directory: "/"
+    target-branch: "master"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "master"
     schedule:
       interval: "weekly"

@@ -9,6 +9,7 @@ use App\Models\Config;
 use App\Services\Analytics;
 use App\Services\Auth;
 use App\Services\Captcha;
+use App\Services\Config\ClientConfig;
 use App\Services\Reward;
 use App\Services\Subscribe;
 use App\Utils\ResponseHelper;
@@ -17,7 +18,6 @@ use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest;
-use function json_encode;
 use function strtotime;
 use function time;
 
@@ -51,13 +51,27 @@ final class UserController extends BaseController
             }
         }
 
+        $universalSub = Subscribe::getUniversalSubLink($this->user);
+        $r2Enabled = filter_var($_ENV['enable_r2_client_download'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+        $clientData = ClientConfig::getClients(
+            $universalSub,
+            $_ENV['appName'] ?? 'SSPanel',
+            $r2Enabled
+        );
+
         return $response->write(
             $this->view()
                 ->assign('ann', $ann)
                 ->assign('captcha', $captcha)
-                ->assign('traffic_logs', json_encode($traffic_logs))
+                ->assign('traffic_logs', $traffic_logs)
                 ->assign('class_expire_days', $class_expire_days)
-                ->assign('UniversalSub', Subscribe::getUniversalSubLink($this->user))
+                ->assign('UniversalSub', $universalSub)
+                ->assign('clientData', $clientData['clients'])
+                ->assign('platformIcons', $clientData['icons'])
+                ->assign('user_class', $this->user->class)
+                ->assign('user_money', $this->user->money)
+                ->assign('ip_limit', $this->user->node_iplimit)
+                ->assign('speed_limit', $this->user->node_speedlimit)
                 ->fetch('user/index.tpl')
         );
     }
@@ -81,7 +95,7 @@ final class UserController extends BaseController
 
     public function checkin(ServerRequest $request, Response $response, array $args): ResponseInterface
     {
-        if (! Config::obtain('enable_checkin') || ! $this->user->isAbleToCheckin()) {
+        if (! Config::obtain('enable_checkin')) {
             return ResponseHelper::error($response, '暂时还不能签到');
         }
 
@@ -95,8 +109,8 @@ final class UserController extends BaseController
 
         $traffic = Reward::issueCheckinReward($this->user->id);
 
-        if (! $traffic) {
-            return ResponseHelper::error($response, '签到失败');
+        if ($traffic === false) {
+            return ResponseHelper::error($response, '暂时还不能签到');
         }
 
         return $response->withJson([

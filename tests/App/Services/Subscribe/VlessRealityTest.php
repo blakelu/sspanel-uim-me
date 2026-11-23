@@ -158,7 +158,8 @@ final class VlessRealityTest extends TestCase
         }
         $this->assertFalse(VlessReality::isConfigured($base + ['path' => 'invalid']));
         $this->assertFalse(VlessReality::isConfigured($base + ['mode' => 'invalid']));
-        $this->assertFalse(VlessReality::isConfigured($base + ['security' => 'tls']));
+        $this->assertTrue(VlessReality::isConfigured($base + ['security' => 'tls']));
+        $this->assertFalse(VlessReality::isConfigured(['sni' => '', 'security' => 'tls'] + $base));
         unset($base['pbk']);
         $this->assertFalse(VlessReality::isConfigured($base));
     }

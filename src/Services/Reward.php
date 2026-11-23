@@ -7,10 +7,10 @@ namespace App\Services;
 use App\Models\Config;
 use App\Models\Payback;
 use App\Models\User;
-use App\Models\UserMoneyLog;
 use App\Utils\Tools;
 use Exception;
 use function random_int;
+use function strtotime;
 use function time;
 
 final class Reward
@@ -62,17 +62,7 @@ final class Reward
         }
 
         if ($ref_get !== 0) {
-            $money_before = $ref_user->money;
-            $ref_user->money += $ref_get;
-            $ref_user->save();
-            // 添加余额记录
-            (new UserMoneyLog())->add(
-                $ref_user->id,
-                (float) $money_before,
-                (float) $ref_user->money,
-                $ref_get,
-                '邀请用户 #' . $user_id . ' 返利',
-            );
+            Wallet::credit($ref_user->id, $ref_get, '邀请用户 #' . $user_id . ' 返利');
             // 添加返利记录
             (new Payback())->add(
                 (float) $total,
@@ -98,34 +88,17 @@ final class Reward
 
         if ($user !== null && $ref_user !== null) {
             if ($invite_reg_money_reward !== 0) {
-                $money_before = $user->money;
-                $user->money += $invite_reg_money_reward;
-                $user->save();
-                // 添加余额记录
-                (new UserMoneyLog())->add(
-                    $user->id,
-                    (float) $money_before,
-                    (float) $user->money,
-                    $invite_reg_money_reward,
-                    '被用户 #' . $ref_user_id . ' 邀请注册奖励',
-                );
+                Wallet::credit($user->id, $invite_reg_money_reward, '被用户 #' . $ref_user_id . ' 邀请注册奖励');
             }
 
             if ($invite_reg_traffic_reward !== 0) {
-                $ref_user->transfer_enable += Tools::gbToB($invite_reg_traffic_reward);
-                $ref_user->save();
+                $ref_user->increment('transfer_enable', Tools::gbToB($invite_reg_traffic_reward));
             }
         }
     }
 
     public static function issueCheckinReward($user_id): int|false
     {
-        $user = (new User())->where('id', $user_id)->first();
-
-        if ($user === null) {
-            return false;
-        }
-
         $checkin_min = Config::obtain('checkin_min');
         $checkin_max = Config::obtain('checkin_max');
 
@@ -139,10 +112,22 @@ final class Reward
             }
         }
 
-        if ($traffic !== 0) {
-            $user->transfer_enable += Tools::mbToB($traffic);
-            $user->last_check_in_time = time();
-            $user->save();
+        $today_start = strtotime('today');
+        $tomorrow_start = strtotime('tomorrow');
+
+        $updated = (new User())->where('id', $user_id)
+            ->where('is_shadow_banned', 0)
+            ->where(static function ($query) use ($today_start, $tomorrow_start): void {
+                $query->where('last_check_in_time', '<', $today_start)
+                    ->orWhere('last_check_in_time', '>=', $tomorrow_start);
+            })
+            ->update([
+                'transfer_enable' => DB::connection()->raw('transfer_enable + ' . Tools::mbToB($traffic)),
+                'last_check_in_time' => time(),
+            ]);
+
+        if ($updated === 0) {
+            return false;
         }
 
         return $traffic;

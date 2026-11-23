@@ -193,6 +193,31 @@
         modes: ['code', 'tree'],
     };
     const editor = new JSONEditor(container, options);
+    editor.set({});
+
+    {literal}
+    $('#sort').on('change', function () {
+        if ($(this).val() === '15' && Object.keys(editor.get()).length === 0) {
+            editor.set({
+                offset_port_node: '443',
+                offset_port_user: '443',
+                host: '',
+                allow_insecure: false,
+                hysteria2: {
+                    version: 2,
+                    udpIdleTimeout: 60,
+                    masquerade: {type: '404'},
+                    finalmask: {
+                        udp: [],
+                        quicParams: {congestion: 'bbr'},
+                    },
+                    portHopping: {enabled: false, autoConfigureFirewall: false, ports: ''},
+                },
+            });
+        }
+    });
+
+    {/literal}
 
     $("#create-node").click(function () {
         $.ajax({

@@ -1,6 +1,7 @@
 {include file='user/header.tpl'}
 
 <script src="//{$config['jsdelivr_url']}/npm/jquery/dist/jquery.min.js"></script>
+<script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
 
 <div class="page-wrapper">
     <div class="container-xl">
@@ -131,17 +132,17 @@
                                                     <h3 class="card-title">IM 账号绑定</h3>
                                                     <div class="mb-3">
                                                         <select id="imtype" class="form-select"
-                                                                {if $user->im_type !== 0 && $user->im_value !== ''}disabled=""{/if}>
-                                                            <option value="0" {if $user->im_type === 0}selected{/if}>
+                                                                {if $user->im_type !== $im_types.None && $user->im_value !== ''}disabled=""{/if}>
+                                                            <option value="{$im_types.None}" {if $user->im_type === $im_types.None}selected{/if}>
                                                                 未绑定
                                                             </option>
-                                                            <option value="1" {if $user->im_type === 1}selected{/if}>
+                                                            <option value="{$im_types.Slack}" {if $user->im_type === $im_types.Slack}selected{/if}>
                                                                 Slack
                                                             </option>
-                                                            <option value="2" {if $user->im_type === 2}selected{/if}>
+                                                            <option value="{$im_types.Discord}" {if $user->im_type === $im_types.Discord}selected{/if}>
                                                                 Discord
                                                             </option>
-                                                            <option value="4" {if $user->im_type === 4}selected{/if}>
+                                                            <option value="{$im_types.Telegram}" {if $user->im_type === $im_types.Telegram}selected{/if}>
                                                                 Telegram
                                                             </option>
                                                         </select>
@@ -161,7 +162,7 @@
                                             <div class="card">
                                                 <div class="card-body">
                                                     <h3 class="card-title">解绑 IM 账户</h3>
-                                                    {if $user->im_type === 0}
+                                                    {if $user->im_type === $im_types.None}
                                                     <p>你的账户当前没有绑定任何 IM 服务</p>
                                                     {else}
                                                     <p>
@@ -171,7 +172,7 @@
                                                     </p>
                                                     {/if}
                                                 </div>
-                                                {if $user->im_type !== 0}
+                                                {if $user->im_type !== $im_types.None}
                                                 <div class="card-footer">
                                                     <div class="d-flex">
                                                         <button class="btn btn-red ms-auto"
@@ -187,75 +188,6 @@
                                 </div>
                                 <div class="tab-pane" id="login_security" role="tabpanel">
                                     <div class="row row-deck row-cards">
-                                        <div class="col-sm-12 col-md-6">
-                                            <div class="card">
-                                                <div class="card-body">
-                                                    <h3 class="card-title">多因素认证</h3>
-                                                    <div class="col-md-12">
-                                                        <div class="col-sm-6 col-md-6">
-                                                            <i class="ti ti-brand-apple"></i>
-                                                            <a target="view_window"
-                                                               href="https://apps.apple.com/us/app/google-authenticator/id388497605">iOS
-                                                                客户端
-                                                            </a>
-                                                            &nbsp;&nbsp;&nbsp;
-                                                            <i class="ti ti-brand-android"></i>
-                                                            <a target="view_window"
-                                                               href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android
-                                                                客户端
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                    <br>
-                                                    <div class="row">
-                                                        <div class="col-md-3">
-                                                            <p id="qrcode"></p>
-                                                        </div>
-                                                        <div class="col-md-9">
-                                                            <div class="mb-3">
-                                                                <select id="ga-enable" class="form-select">
-                                                                    <option value="0">不使用</option>
-                                                                    <option value="1"
-                                                                            {if $user->ga_enable === '1'}selected{/if}>
-                                                                        使用两步认证登录
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <input id="ga-test-code" type="text"
-                                                                       class="form-control"
-                                                                       placeholder="测试两步认证验证码">
-                                                            </div>
-                                                            <div class="col-md-12">
-                                                                <p>密钥：
-                                                                    <code id="ga-token" class="spoiler">
-                                                                        {$user->ga_token}
-                                                                    </code>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-footer">
-                                                    <div class="d-flex">
-                                                        <button class="btn btn-link"
-                                                                hx-post="/user/ga_reset" hx-swap="none" >
-                                                            重置
-                                                        </button>
-                                                        <button class="btn btn-link"
-                                                                hx-post="/user/ga_check" hx-swap="none"
-                                                                hx-vals='js:{ code: document.getElementById("ga-test-code").value }'>
-                                                            测试
-                                                        </button>
-                                                        <button class="btn btn-primary ms-auto"
-                                                                hx-post="/user/ga_set" hx-swap="none"
-                                                                hx-vals='js:{ enable: document.getElementById("ga-enable").value }'>
-                                                            设置
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                         <div class="col-sm-12 col-md-6">
                                             <div class="card">
                                                 <div class="card-body">
@@ -291,6 +223,120 @@
                                                                     password: document.getElementById("password").value
                                                                 }'>
                                                             修改
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12 col-md-6">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h3 class="card-title">TOTP
+                                                        {if $totpDevices}
+                                                            <span class="badge bg-green text-green-fg">已启用</span>
+                                                        {else}
+                                                            <span class="badge bg-red text-red-fg">未启用</span>
+                                                        {/if}
+                                                    </h3>
+                                                    <p class="card-subtitle">TOTP 是一种基于时间的一次性密码算法，可以使用
+                                                        Google Authenticator 或者 Authy
+                                                        等客户端进行验证</p>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="d-flex">
+                                                        {if $totpDevices}
+                                                            <button class="btn btn-red ms-auto"
+                                                                    hx-delete="/user/totp"
+                                                                    hx-confirm="确认禁用TOTP？"
+                                                                    hx-swap="none">
+                                                                禁用
+                                                            </button>
+                                                        {else}
+                                                            <button class="btn btn-primary ms-auto" id="enableTotp">
+                                                                启用
+                                                            </button>
+                                                        {/if}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12 col-md-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h3 class="card-title">Passkey</h3>
+                                                    <p class="card-subtitle">Passkey
+                                                        是一种新的身份验证标准，使用生物识别或者安全密钥进行身份验证以取代传统密码。</p>
+                                                    <div class="row row-cols-1 row-cols-md-4 g-4">
+                                                        {foreach $webauthnDevices as $device}
+                                                            <div class="col">
+                                                                <div class="card">
+                                                                    <div class="card-body">
+                                                                        <h5 class="card-title">{$device->name|default:'未命名'}</h5>
+                                                                        <p class="card-text">
+                                                                            添加时间: {$device->created_at}</p>
+                                                                        <p class="card-text">
+                                                                            上次使用: {$device->used_at|default:'从未使用'}</p>
+                                                                        <button class="btn btn-danger"
+                                                                                hx-delete="/user/webauthn/{$device->id}"
+                                                                                hx-swap="none"
+                                                                                hx-confirm="确认删除此设备？"
+                                                                        >删除
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {/foreach}
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="d-flex">
+                                                        <button class="btn btn-primary ms-auto" id="webauthnReg">
+                                                            注册 Passkey 设备
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12 col-md-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h3 class="card-title">FIDO
+                                                        {if $fidoDevices}
+                                                            <span class="badge bg-green text-green-fg">已启用</span>
+                                                        {else}
+                                                            <span class="badge bg-red text-red-fg">未启用</span>
+                                                        {/if}
+                                                    </h3>
+                                                    <p class="card-subtitle">FIDO2
+                                                        是一种基于公钥加密的身份验证标准，可以提供更安全的登录方式。支持Yubikey等硬件安全密钥。</p>
+                                                    {if $fidoDevices}
+                                                        <div class="row row-cols-1 row-cols-md-4 g-4">
+                                                            {foreach $fidoDevices as $device}
+                                                                <div class="col">
+                                                                    <div class="card">
+                                                                        <div class="card-body">
+                                                                            <h5 class="card-title">{$device->name|default:'未命名'}</h5>
+                                                                            <p class="card-text">
+                                                                                添加时间: {$device->created_at}</p>
+                                                                            <p class="card-text">
+                                                                                上次使用: {$device->used_at|default:'从未使用'}</p>
+                                                                            <button class="btn btn-danger"
+                                                                                    hx-delete="/user/fido/{$device->id}"
+                                                                                    hx-swap="none"
+                                                                                    hx-confirm="确认删除此设备？"
+                                                                            >删除
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            {/foreach}
+                                                        </div>
+                                                    {/if}
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="d-flex">
+                                                        <button class="btn btn-primary ms-auto" id="fidoReg">
+                                                            注册 FIDO 设备
                                                         </button>
                                                     </div>
                                                 </div>
@@ -555,37 +601,184 @@
     </div>
     {/if}
 
+    <div class="modal" id="totpModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">设置TOTP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p>请使用 Google Authenticator 或者 Authy 扫描下面的二维码</p>
+                        </div>
+                        <div class="col-md-12 d-flex justify-content-center align-items-center">
+                            <div id="qrcode"></div>
+                        </div>
+                        <div class="col-md-12">
+                            <p>若无法扫描二维码，可以手动输入以下密钥</p>
+                            <p id="totpSecret"></p>
+                        </div>
+                        <div class="col-md-12">
+                            <input type="text" id="totpCode" placeholder="输入TOTP代码" class="form-control mx-auto">
+                        </div>
+                    </div>
+                    <div id="qrcode"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="submitTotp">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {include file='user/footer.tpl'}
     <script>
-        let qrcode = new QRCode('qrcode', {
-            text: "{$ga_url}",
-            width: 128,
-            height: 128,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
+        {if not $totpDevices}
+        document.querySelector('#enableTotp').addEventListener('click', async () => {
+            const resp = await fetch('/user/totp');
+            const data = await resp.json();
+            var modal = new tabler.bootstrap.Modal(document.getElementById('totpModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            if (data.ret === 1) {
+                let qrcodeElement = document.getElementById('qrcode');
+                qrcodeElement.innerHTML = '';
+                let totpSecret = document.getElementById('totpSecret');
+                totpSecret.textContent = data.token;
+                let qrcode = new QRCode(qrcodeElement, {
+                    text: data.url,
+                    width: 256,
+                    height: 256,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                modal.show();
+            } else {
+                var fail_modal = new tabler.bootstrap.Modal(document.getElementById('fail-dialog'));
+                document.getElementById('fail-message').innerText = data.msg;
+                fail_modal.show();
+            }
         });
 
-        {if $user->im_type === 0 && $user->im_value === ''}
+        document.getElementById('submitTotp').addEventListener('click', function () {
+            var totpCode = document.getElementById('totpCode').value;
+
+            fetch('/user/totp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                {literal}
+                body: JSON.stringify({code: totpCode}),
+                {/literal}
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var totpModal = new tabler.bootstrap.Modal(document.getElementById('totpModal'));
+
+                    if (data.ret === 1) {
+                        totpModal.hide();
+                        document.getElementById("success-message").textContent = data.msg;
+                        successDialog.show();
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        document.getElementById("fail-message").textContent = data.msg;
+                        failDialog.show();
+                    }
+                })
+        });
+        {/if}
+        const { startRegistration } = SimpleWebAuthnBrowser;
+        document.getElementById('fidoReg').addEventListener('click', async () => {
+            const resp = await fetch('/user/fido');
+            let attResp;
+            const options = await resp.json();
+            try {
+                attResp = await startRegistration({ optionsJSON: options });
+            } catch (error) {
+                $('#error-message').text(error.message);
+                failDialog.show();
+                throw error;
+            }
+            attResp.name = prompt("请输入设备名称:");
+            const verificationResp = await fetch('/user/fido', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(attResp),
+            });
+
+            const verificationJSON = await verificationResp.json();
+            if (verificationJSON.ret === 1) {
+                $('#success-message').text(verificationJSON.msg);
+                successDialog.show();
+                setTimeout(function () {
+                    location.reload();
+                }, 1000);
+            } else {
+                $('#error-message').text(verificationJSON.msg);
+                failDialog.show();
+            }
+        });
+        document.getElementById('webauthnReg').addEventListener('click', async () => {
+            const resp = await fetch('/user/webauthn');
+            const options = await resp.json();
+            let attResp;
+            try {
+                attResp = await startRegistration({ optionsJSON: options });
+            } catch (error) {
+                $('#error-message').text(error.message);
+                failDialog.show();
+                throw error;
+            }
+            attResp.name = prompt("请输入设备名称:");
+            const verificationResp = await fetch('/user/webauthn', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(attResp),
+            });
+            const verificationJSON = await verificationResp.json();
+            if (verificationJSON.ret === 1) {
+                $('#success-message').text(verificationJSON.msg);
+                successDialog.show();
+                setTimeout(function () {
+                    location.reload();
+                }, 1000);
+            } else {
+                $('#error-message').text(verificationJSON.msg);
+                failDialog.show();
+            }
+        });
+        {if $user->im_type === $im_types.None && $user->im_value === ''}
         let oauthProvider = $('#oauth-provider');
 
         $("#imtype").on('change', function () {
-            if ($(this).val() === '0') {
+            if ($(this).val() === '{$im_types.None}') {
                 oauthProvider.empty();
-            } else if ($(this).val() === '1') {
+            } else if ($(this).val() === '{$im_types.Slack}') {
                 oauthProvider.empty();
                 oauthProvider.append(
                     "<a id='bind-slack' class='btn btn-azure ms-auto'>绑定 Slack</a>"
                 );
-            } else if ($(this).val() === '2') {
+            } else if ($(this).val() === '{$im_types.Discord}') {
                 oauthProvider.empty();
                 oauthProvider.append(
                     "<a id='bind-discord' class='btn btn-indigo ms-auto'>绑定 Discord</a>"
                 );
-            } else if ($(this).val() === '4') {
+            } else if ($(this).val() === '{$im_types.Telegram}') {
                 oauthProvider.empty();
                 oauthProvider.append(
                     '<script async src=\"https://telegram.org/js/telegram-widget.js?22\"' +
-                    ' data-telegram-login=\"' + "{$public_setting['telegram_bot']}" +
+                    ' data-telegram-login=\"' + {$public_setting['telegram_bot']|js nofilter} +
                     '\" data-size=\"large" data-onauth=\"onTelegramAuth(user)\"' +
                     ' data-request-access=\"write\"><\/script>'
                 );
@@ -643,5 +836,3 @@
         }
         {/if}
     </script>
-
-    {include file='user/footer.tpl'}

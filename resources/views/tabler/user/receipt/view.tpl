@@ -33,6 +33,8 @@
         object-fit: contain;
     }
 
+    .text-preline { white-space: pre-line; }
+
     .receipt-seller-name {
         margin: 0 0 2mm;
         font-size: 18pt;
@@ -178,14 +180,14 @@
         <div class="page-header d-print-none text-white">
             <div class="row align-items-center">
                 <div class="col">
-                    <h2 class="page-title"><span class="home-title">收据 {$receipt->receipt_no|escape}</span></h2>
+                    <h2 class="page-title"><span class="home-title">收据 {$receipt->receipt_no}</span></h2>
                     <div class="page-pretitle my-3"><span class="home-subtitle">电子收据</span></div>
                 </div>
                 <div class="col-auto">
                     <div class="btn-list">
                         <a class="btn" href="/user/order/{$receipt->order_id}/view">返回订单</a>
                         <button class="btn btn-primary" id="download-receipt" type="button"
-                                data-filename="receipt-{$receipt->receipt_no|escape}.pdf">
+                                data-filename="receipt-{$receipt->receipt_no}.pdf">
                             <i class="icon ti ti-download"></i>
                             下载 PDF
                         </button>
@@ -198,20 +200,20 @@
         <div class="container-xl receipt-stage">
             <article class="receipt-sheet" id="receipt-sheet">
                 <header class="receipt-seller">
-                    <img class="receipt-logo" src="{$receipt->seller_logo|escape}" alt="">
+                    <img class="receipt-logo" src="{$receipt->seller_logo}" alt="">
                     <div>
-                        <h1 class="receipt-seller-name">{$receipt->seller_name|escape}</h1>
+                        <h1 class="receipt-seller-name">{$receipt->seller_name}</h1>
                         {if $receipt->seller_registration_no !== ''}
-                            <div class="receipt-seller-meta">Business Registration No.: {$receipt->seller_registration_no|escape}</div>
+                            <div class="receipt-seller-meta">Business Registration No.: {$receipt->seller_registration_no}</div>
                         {/if}
                         {if $receipt->seller_address !== ''}
-                            <div class="receipt-seller-meta">{$receipt->seller_address|escape}</div>
+                            <div class="receipt-seller-meta">{$receipt->seller_address}</div>
                         {/if}
                         {if $receipt->seller_tax_id !== ''}
-                            <div class="receipt-seller-meta">Tax Identification Number (TIN): {$receipt->seller_tax_id|escape}</div>
+                            <div class="receipt-seller-meta">Tax Identification Number (TIN): {$receipt->seller_tax_id}</div>
                         {/if}
                         {if $receipt->seller_sst_no !== ''}
-                            <div class="receipt-seller-meta">SST Registration No.: {$receipt->seller_sst_no|escape}</div>
+                            <div class="receipt-seller-meta">SST Registration No.: {$receipt->seller_sst_no}</div>
                         {/if}
                     </div>
                 </header>
@@ -222,27 +224,27 @@
                 <section class="receipt-parties">
                     <div class="receipt-fields">
                         <span class="receipt-label">Buyer Name</span>
-                        <strong class="receipt-value">{$receipt->buyer_name|escape}</strong>
+                        <strong class="receipt-value">{$receipt->buyer_name}</strong>
                         <span class="receipt-label">TIN</span>
-                        <span class="receipt-value">{$receipt->buyer_tax_id|default:'NA'|escape}</span>
+                        <span class="receipt-value">{$receipt->buyer_tax_id|default:'NA'}</span>
                         <span class="receipt-label">Registration No.</span>
-                        <span class="receipt-value">{$receipt->buyer_registration_no|default:'NA'|escape}</span>
+                        <span class="receipt-value">{$receipt->buyer_registration_no|default:'NA'}</span>
                         <span class="receipt-label">Contact No.</span>
-                        <span class="receipt-value">{$receipt->buyer_contact_no|default:'NA'|escape}</span>
+                        <span class="receipt-value">{$receipt->buyer_contact_no|default:'NA'}</span>
                         <span class="receipt-label">Email</span>
-                        <span class="receipt-value">{$receipt->buyer_email|default:'NA'|escape}</span>
+                        <span class="receipt-value">{$receipt->buyer_email|default:'NA'}</span>
                         <span class="receipt-label">SST No.</span>
-                        <span class="receipt-value">{$receipt->buyer_sst_no|default:'NA'|escape}</span>
+                        <span class="receipt-value">{$receipt->buyer_sst_no|default:'NA'}</span>
                         <span class="receipt-label">Address</span>
-                        <span class="receipt-value">{$receipt->buyer_address|default:'NA'|escape|nl2br}</span>
+                        <span class="receipt-value text-preline">{$receipt->buyer_address|default:'NA'}</span>
                     </div>
                     <div class="receipt-fields compact">
                         <span class="receipt-label">Receipt No.</span>
-                        <strong class="receipt-value">{$receipt->receipt_no|escape}</strong>
+                        <strong class="receipt-value">{$receipt->receipt_no}</strong>
                         <span class="receipt-label">Date</span>
-                        <span class="receipt-value">{$receipt->date|escape}</span>
+                        <span class="receipt-value">{$receipt->date}</span>
                         <span class="receipt-label">Currency</span>
-                        <span class="receipt-value">{$receipt->currency|escape}</span>
+                        <span class="receipt-value">{$receipt->currency}</span>
                         <span class="receipt-label">Order No.</span>
                         <span class="receipt-value">#{$receipt->order_id}</span>
                     </div>
@@ -272,7 +274,7 @@
                     <tbody>
                     <tr>
                         <td>001</td>
-                        <td>{$receipt->item_name|escape}</td>
+                        <td>{$receipt->item_name}</td>
                         <td>{$receipt->quantity}</td>
                         <td>{$receipt->unit_price_text}</td>
                         <td>{$receipt->discount_text}</td>
@@ -284,15 +286,15 @@
 
                 <section class="receipt-summary-wrap">
                     <div class="receipt-summary">
-                        <div class="receipt-summary-title">AMOUNT ({$receipt->currency|escape})</div>
+                        <div class="receipt-summary-title">AMOUNT ({$receipt->currency})</div>
                         <div class="receipt-summary-row">
                             <span>Total Excluding Tax</span><span>{$receipt->subtotal_text}</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Region</span><span>{$receipt->tax_region|escape}</span>
+                            <span>Tax Region</span><span>{$receipt->tax_region}</span>
                         </div>
                         <div class="receipt-summary-row">
-                            <span>Tax Type</span><span>{$receipt->tax_type|escape}</span>
+                            <span>Tax Type</span><span>{$receipt->tax_type}</span>
                         </div>
                         <div class="receipt-summary-row">
                             <span>Tax Rate</span><span>{$receipt->tax_rate_text}%</span>
@@ -306,7 +308,7 @@
                     </div>
                 </section>
 
-                <footer class="receipt-thanks">{$receipt->footer|escape}</footer>
+                <footer class="receipt-thanks">{$receipt->footer}</footer>
             </article>
         </div>
     </div>

@@ -70,15 +70,11 @@ final class Stripe extends Base
         }
 
         $user = Auth::getUser();
-        $pl = (new Paylist())->where('invoice_id', $invoice_id)->first();
-
-        if ($pl === null) {
-            $pl = new Paylist();
-            $pl->userid = $user->id;
-            $pl->total = $price;
-            $pl->invoice_id = $invoice_id;
-            $pl->tradeno = self::generateGuid();
-        }
+        $pl = new Paylist();
+        $pl->userid = $user->id;
+        $pl->total = $price;
+        $pl->invoice_id = $invoice_id;
+        $pl->tradeno = self::generateGuid();
 
         $pl->gateway = self::_readableName();
         $pl->save();
@@ -94,10 +90,11 @@ final class Stripe extends Base
             ]);
         }
         // https://docs.stripe.com/currencies?presentment-currency=US#zero-decimal
+        // UGX 属 zero-decimal，但 charge 仍要求两位表示（5 UGX 传 500），故从下表移除；ISK 有同样要求，本就不在表内
         if (! in_array(
             $stripe_currency,
             ['BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW',
-                'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
+                'MGA', 'PYG', 'RWF', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
             ]
         )) {
             $exchange_amount *= 100;
@@ -116,7 +113,7 @@ final class Stripe extends Base
                             'product_data' => [
                                 'name' => 'Invoice #' . $invoice_id,
                             ],
-                            'unit_amount' => (int) ($exchange_amount * 100),
+                            'unit_amount' => (int) $exchange_amount,
                         ],
                         'quantity' => 1,
                     ],

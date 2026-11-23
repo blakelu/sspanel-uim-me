@@ -8,9 +8,9 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Utils\ClassHelper;
 use Psr\Http\Message\ResponseInterface;
+use function bccomp;
 use function in_array;
 use function is_numeric;
-use function round;
 use function time;
 
 final class Payment
@@ -53,7 +53,7 @@ final class Payment
     {
         $all = self::getPaymentMap();
 
-        return $all[$name];
+        return $all[$name] ?? null;
     }
 
     public static function notify($request, $response, $args): ResponseInterface
@@ -110,45 +110,52 @@ final class Payment
         }
 
         $user = Auth::getUser();
-        $invoice = (new Invoice())->where('id', $invoiceId)->where('user_id', $user->id)->first();
+        [$status, $orderId] = DB::connection()->transaction(static function () use ($invoiceId, $user): array {
+            $invoice = (new Invoice())->where('user_id', $user->id)->lockForUpdate()->find($invoiceId);
 
-        if ($invoice === null || round((float) $invoice->price, 2) > 0.0) {
+            if ($invoice === null || bccomp((string) $invoice->price, '0', 2) !== 0) {
+                return ['gateway', null];
+            }
+
+            if (! $invoice->acceptsPayment() && $invoice->status !== 'paid_gateway') {
+                return ['invalid_invoice', null];
+            }
+
+            $order = (new Order())->where('user_id', $user->id)->lockForUpdate()->find($invoice->order_id);
+
+            if ($order === null || ! in_array($order->status, ['pending_payment', 'pending_activation', 'activated'], true)) {
+                return ['invalid_order', null];
+            }
+
+            if ($invoice->status !== 'paid_gateway') {
+                $invoice->status = 'paid_gateway';
+                $invoice->update_time = time();
+                $invoice->pay_time = time();
+                $invoice->save();
+            }
+
+            if ($order->status === 'pending_payment') {
+                $order->status = 'pending_activation';
+                $order->update_time = time();
+                $order->save();
+            }
+
+            return ['paid', (int) $order->id];
+        }, 3);
+
+        if ($status === 'gateway') {
             return null;
         }
 
-        if (! in_array($invoice->status, ['unpaid', 'partially_paid', 'paid_gateway'], true)) {
+        if ($status !== 'paid') {
             return $response->withJson([
                 'ret' => 0,
-                'msg' => '账单状态不允许支付',
+                'msg' => $status === 'invalid_invoice' ? '账单状态不允许支付' : '订单状态不允许支付',
             ]);
         }
 
-        $order = (new Order())->where('id', $invoice->order_id)->where('user_id', $user->id)->first();
+        OrderActivation::activate($orderId);
 
-        $payableOrderStatuses = ['pending_payment', 'pending_activation', 'activated'];
-
-        if ($order === null || ! in_array($order->status, $payableOrderStatuses, true)) {
-            return $response->withJson([
-                'ret' => 0,
-                'msg' => '订单状态不允许支付',
-            ]);
-        }
-
-        if ($invoice->status !== 'paid_gateway') {
-            $invoice->status = 'paid_gateway';
-            $invoice->update_time = time();
-            $invoice->pay_time = time();
-            $invoice->save();
-        }
-
-        if ($order->status === 'pending_payment') {
-            $order->status = 'pending_activation';
-            $order->update_time = time();
-            $order->save();
-        }
-
-        OrderActivation::activate((int) $order->id);
-
-        return $response->withHeader('HX-Redirect', '/user/invoice/' . $invoice->id . '/view');
+        return $response->withHeader('HX-Redirect', '/user/invoice/' . $invoiceId . '/view');
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Services\IM;
+use App\Services\IM\ImType;
 use App\Services\IM\Telegram;
 use App\Utils\Tools;
 use GuzzleHttp\Exception\GuzzleException;
@@ -48,8 +49,6 @@ use const PHP_EOL;
  * @property int    $class 等级
  * @property string $class_expire 等级过期时间
  * @property string $theme 网站主题
- * @property string $ga_token GA密钥
- * @property int    $ga_enable GA开关
  * @property string $remark 备注
  * @property int    $node_group 节点分组
  * @property int    $is_banned 是否封禁
@@ -111,9 +110,9 @@ final class User extends Model
      */
     public function imType(): string
     {
-        return match ($this->im_type) {
-            1 => 'Slack',
-            2 => 'Discord',
+        return match (ImType::tryFrom($this->im_type)) {
+            ImType::Slack => 'Slack',
+            ImType::Discord => 'Discord',
             default => 'Telegram',
         };
     }
@@ -224,6 +223,14 @@ final class User extends Model
     }
 
     /**
+     * 没有下过订单的用户
+     */
+    public function isNewUser(): bool
+    {
+        return ! (new Order())->where('user_id', $this->id)->exists();
+    }
+
+    /**
      * 删除用户的订阅链接
      */
     public function removeLink(): void
@@ -253,16 +260,17 @@ final class User extends Model
         (new Link())->where('userid', $uid)->delete();
         (new LoginIp())->where('userid', $uid)->delete();
         (new SubscribeLog())->where('user_id', $uid)->delete();
+        (new MFADevice())->where('userid', $uid)->delete();
 
         return $this->delete();
     }
 
     public function unbindIM(): bool
     {
-        $this->im_type = 0;
+        $this->im_type = ImType::None->value;
         $this->im_value = '';
 
-        if ($this->im_type === 4 && Config::obtain('telegram_unbind_kick_member')) {
+        if ($this->im_type === ImType::Telegram->value && Config::obtain('telegram_unbind_kick_member')) {
             try {
                 (new Telegram())->banGroupMember((int) $this->im_value);
             } catch (TelegramSDKException) {
@@ -311,10 +319,27 @@ final class User extends Model
             $text .= '今日使用：' . $lastday_traffic;
 
             try {
-                IM::send((int) $this->im_value, $text, $this->im_type);
+                IM::send($this->im_value, $text, $this->im_type);
             } catch (GuzzleException|TelegramSDKException $e) {
                 echo $e->getMessage() . PHP_EOL;
             }
         }
+    }
+
+    /**
+     * 检查多因素认证启用状态
+     *
+     * @return array
+     */
+    public function checkMfaStatus(): array
+    {
+        $fido = (new MFADevice())->where('userid', $this->id)->where('type', 'fido')->first();
+        $totp = (new MFADevice())->where('userid', $this->id)->where('type', 'totp')->first();
+        $hasFido = $fido !== null;
+        $hasTotp = $totp !== null;
+        if (! $hasFido && ! $hasTotp) {
+            return ['require' => false];
+        }
+        return ['require' => true, 'fido' => $hasFido, 'totp' => $hasTotp];
     }
 }

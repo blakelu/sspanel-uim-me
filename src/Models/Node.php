@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\Subscribe\Vless;
+use App\Services\Subscribe\VlessReality;
 use App\Utils\Tools;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use function dns_get_record;
-use function is_array;
-use function json_decode;
-use function strtolower;
 use function time;
 use const DNS_A;
 use const DNS_AAAA;
@@ -98,15 +97,17 @@ final class Node extends Model
 
     private function vlessTypeName(): string
     {
-        $config = json_decode((string) $this->custom_config, true);
+        $config = VlessReality::getConfig($this);
 
-        if (! is_array($config) || strtolower((string) ($config['protocol'] ?? '')) !== 'vless') {
-            return 'Vmess';
+        if (VlessReality::isEnabled($config)) {
+            if (VlessReality::isXHTTP($config)) {
+                return VlessReality::isXHTTPReality($config) ? 'VLESS XHTTP + Reality' : 'VLESS XHTTP + TLS';
+            }
+
+            return VlessReality::isWebSocketTLS($config) ? 'VLESS WS + TLS' : 'VLESS Reality';
         }
 
-        return strtolower((string) ($config['network'] ?? 'tcp')) === 'ws'
-            && strtolower((string) ($config['security'] ?? 'reality')) === 'tls'
-            ? 'VLESS WS + TLS' : 'VLESS Reality';
+        return Vless::enabled($config) ? 'VLESS' : 'Vmess';
     }
 
     public function isDynamicRate(): string

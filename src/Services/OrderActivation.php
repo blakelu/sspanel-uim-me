@@ -6,10 +6,10 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\User;
-use App\Models\UserMoneyLog;
 use App\Utils\Tools;
 use DateTime;
-use function bcadd;
+use function is_numeric;
+use function is_object;
 use function json_decode;
 use function time;
 
@@ -38,7 +38,7 @@ final class OrderActivation
 
             $content = json_decode($order->product_content);
 
-            if ($content === null) {
+            if (! is_object($content)) {
                 return false;
             }
 
@@ -46,7 +46,7 @@ final class OrderActivation
                 'tabp' => self::activateTabp($order, $user, $content),
                 'bandwidth' => self::activateBandwidth($user, $content),
                 'time' => self::activateTime($user, $content),
-                'topup' => self::activateTopup($order, $user, $content),
+                'topup' => self::activateTopup($order, $content),
                 default => false,
             };
 
@@ -77,7 +77,7 @@ final class OrderActivation
 
             $content = json_decode($order->product_content);
 
-            if ($content === null || $order->update_time + $content->time * 86400 >= time()) {
+            if (! is_numeric($content->time ?? null) || $order->update_time + $content->time * 86400 >= time()) {
                 return false;
             }
 
@@ -91,6 +91,11 @@ final class OrderActivation
 
     private static function activateTabp(Order $order, User $user, object $content): bool
     {
+        if (! is_numeric($content->bandwidth ?? null) || ! is_numeric($content->time ?? null)
+            || ! self::hasClassSettings($content)) {
+            return false;
+        }
+
         $activeOrder = (new Order())->where('user_id', $order->user_id)
             ->where('status', 'activated')
             ->where('product_type', 'tabp')
@@ -101,7 +106,7 @@ final class OrderActivation
         if ($activeOrder !== null) {
             $activeContent = json_decode($activeOrder->product_content);
 
-            if ($activeContent === null || $activeOrder->update_time + $activeContent->time * 86400 >= time()) {
+            if (! is_numeric($activeContent->time ?? null) || $activeOrder->update_time + $activeContent->time * 86400 >= time()) {
                 return false;
             }
 
@@ -127,6 +132,10 @@ final class OrderActivation
 
     private static function activateBandwidth(User $user, object $content): bool
     {
+        if (! is_numeric($content->bandwidth ?? null)) {
+            return false;
+        }
+
         $user->transfer_enable += Tools::gbToB($content->bandwidth);
         $user->save();
 
@@ -135,7 +144,7 @@ final class OrderActivation
 
     private static function activateTime(User $user, object $content): bool
     {
-        if ($user->class !== (int) $content->class && $user->class > 0) {
+        if (! self::hasClassSettings($content) || ($user->class !== (int) $content->class && $user->class > 0)) {
             return false;
         }
 
@@ -150,19 +159,19 @@ final class OrderActivation
         return true;
     }
 
-    private static function activateTopup(Order $order, User $user, object $content): bool
+    private static function hasClassSettings(object $content): bool
     {
-        $moneyBefore = (string) $user->money;
-        $user->money = bcadd($moneyBefore, (string) $content->amount, 2);
-        $user->save();
+        return is_numeric($content->class_time ?? null)
+            && isset($content->class, $content->node_group, $content->speed_limit, $content->ip_limit);
+    }
 
-        (new UserMoneyLog())->add(
-            $user->id,
-            (float) $moneyBefore,
-            (float) $user->money,
-            (float) $content->amount,
-            "充值订单 #{$order->id}"
-        );
+    private static function activateTopup(Order $order, object $content): bool
+    {
+        if (! is_numeric($content->amount ?? null) || $content->amount <= 0) {
+            return false;
+        }
+
+        Wallet::credit($order->user_id, $content->amount, "充值订单 #{$order->id}");
 
         return true;
     }

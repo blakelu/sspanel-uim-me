@@ -40,13 +40,24 @@ final class V2Ray extends Base
                     continue;
                 }
 
+                if (Vless::enabled($node_custom_config)) {
+                    $client = $this->vlessClient($node_raw, $node_custom_config);
+                    if ($client === null) {
+                        continue;
+                    }
+                    $links .= Vless::uri($node_raw, $user, $node_custom_config, $client) . PHP_EOL;
+                    continue;
+                }
+
                 $v2_port = $node_custom_config['offset_port_user'] ?? ($node_custom_config['offset_port_node'] ?? 443);
                 $security = $node_custom_config['security'] ?? 'none';
                 $network = $node_custom_config['network'] ?? '';
                 $header = $node_custom_config['header'] ?? ['type' => 'none'];
                 $header_type = $header['type'] ?? '';
                 $host = $node_custom_config['header']['request']['headers']['Host'][0] ?? $node_custom_config['host'] ?? '';
-                $path = $node_custom_config['header']['request']['path'][0] ?? $node_custom_config['path'] ?? '/';
+                // v2rayN share links carry the gRPC service name in path.
+                $path = $network === 'grpc' ? ($node_custom_config['servicename'] ?? '') :
+                    ($node_custom_config['header']['request']['path'][0] ?? $node_custom_config['path'] ?? '/');
 
                 $v2rayn_array = [
                     'v' => '2',
@@ -63,6 +74,11 @@ final class V2Ray extends Base
                 ];
 
                 $links .= 'vmess://' . base64_encode(json_encode($v2rayn_array)) . PHP_EOL;
+            } elseif ((int) $node_raw->sort === 15) {
+                $uri = Hysteria2::buildUri($node_raw, $user);
+                if ($uri !== null) {
+                    $links .= $uri . PHP_EOL;
+                }
             }
         }
 

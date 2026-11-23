@@ -90,7 +90,16 @@ final class ImController extends BaseController
         $type = $args['type'];
 
         if ($type === 'telegram') {
-            $webhook_url = $_ENV['baseUrl'] . '/callback/telegram?token=' . Config::obtain('telegram_webhook_token');
+            $webhook_token = Config::obtain('telegram_webhook_token');
+
+            if (! is_string($webhook_token) || $webhook_token === '') {
+                return $response->withJson([
+                    'ret' => 0,
+                    'msg' => 'Please reset the Telegram webhook token first',
+                ]);
+            }
+
+            $webhook_url = $_ENV['baseUrl'] . '/callback/telegram?token=' . $webhook_token;
 
             try {
                 $telegram = new Api($request->getParam('bot_token'));
@@ -139,7 +148,7 @@ final class ImController extends BaseController
     {
         try {
             (new Discord())->send(
-                (int) $request->getParam('discord_channel_id'),
+                (string) $request->getParam('discord_channel_id'),
                 I18n::trans('bot.test_message', $_ENV['locale']),
             );
         } catch (GuzzleException|\Exception $e) {
@@ -159,7 +168,7 @@ final class ImController extends BaseController
     {
         try {
             (new Slack())->send(
-                (int) $request->getParam('slack_channel_id'),
+                (string) $request->getParam('slack_channel_id'),
                 I18n::trans('bot.test_message', $_ENV['locale']),
             );
         } catch (GuzzleException|\Exception $e) {

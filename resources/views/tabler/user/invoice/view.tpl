@@ -92,7 +92,18 @@
                         </div>
                     </div>
                 </div>
-                {if $invoice->status === 'unpaid' || $invoice->status === 'partially_paid'}
+                {if ($invoice->status === 'unpaid' || $invoice->status === 'partially_paid') && $invoice->price == 0}
+                <div class="col-sm-12 col-md-6 col-lg-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <form hx-post="/user/payment/purchase/free" hx-swap="none">
+                                <input type="hidden" name="invoice_id" value="{$invoice->id}">
+                                <button class="btn btn-primary" type="submit">确认零金额订单</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {elseif $invoice->status === 'unpaid' || $invoice->status === 'partially_paid'}
                 <div class="col-sm-12 col-md-6 col-lg-3">
                     <div class="card">
                         <ul class="nav nav-tabs nav-fill" data-bs-toggle="tabs">

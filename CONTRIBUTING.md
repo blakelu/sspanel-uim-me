@@ -1,6 +1,6 @@
 # How to Contribute / 如何贡献代码
 
-[English](#English)  
+[English](#english)  
 [简体中文](#简体中文)
 
 ## English
@@ -9,7 +9,7 @@
 
 1. Fork the repository
 2. Create a new branch for each feature or improvement
-3. Send a pull request from each feature branch against the dev branch.
+3. Send a pull request from each feature branch against the master branch.
 
 It is very important to separate new features or improvements into separate feature branches, and to send a
 pull request for each branch. This allows each feature or improvement to be reviewed and merged individually.
@@ -24,6 +24,7 @@ And we **recommend** adhering to the [PSR-12 standard](https://github.com/php-fi
 The Commit message must concisely contain all your changes.  
 Please **do not** use words like "fix", "improve" only.    
 Please try to use **English** in the Commit message and use the following Type tags.
+
 - feat: add or modify a feature (feature)
 - fix: fix bugs (bug fix)
 - docs: documents (documentation)
@@ -49,7 +50,7 @@ Please use the function from PSR-7 like `$request->getParsedBodyParam()`, `getPa
 
 1. Fork 本项目
 2. 为每一项新特性或改进创建一个新的分支
-3. 为每一项新特性或改进创建一个独立的 Pull Request 至 dev 分支
+3. 为每一项新特性或改进创建一个独立的 Pull Request 至 master 分支
 
 我们建议你将不同的新特性置于不同的分支并以不同的 Pull Request 提交，这将有利于我们独立审查代码并独立合并。
 
@@ -62,6 +63,7 @@ Please use the function from PSR-7 like `$request->getParsedBodyParam()`, `getPa
 
 Commit 消息必须简洁地包含你所有的修改。请**不要**仅使用「修复」、「改进」等字样。    
 在 Commit 消息中请尽量使用**英文**，并且使用以下 Type 标签：
+
 - feat：新增或修改功能（feature）
 - fix：修补 bug（bug fix）
 - docs：文件（documentation）
