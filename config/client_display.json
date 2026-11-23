@@ -96,7 +96,7 @@
       "importUrl": "sing-box://import-remote-profile?url={sub}/singbox#{name}",
       "platforms": {
         "macOS": {
-          "ext": "dmg",
+          "ext": "pkg",
           "file": "SFM"
         }
       }

@@ -214,7 +214,7 @@ final class ClientDownload extends Command
         $savePath = $this->basePath . $task['savePath'];
         echo '====== ' . $task['name'] . ' 开始 ======' . PHP_EOL;
 
-        $tagName = match ($task['tagMethod']) {
+        $tagName = $task['tagName'] ?? match ($task['tagMethod']) {
             'github_pre_release' => $this->getLatestPreReleaseTagName($task['gitRepo']),
             default => $this->getLatestReleaseTagName($task['gitRepo']),
         };

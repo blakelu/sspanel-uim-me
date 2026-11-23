@@ -11,7 +11,7 @@
                     "saveName": "Clash.Nyanpasu.exe"
                 },
                 {
-                    "sourceName": "clash-nyanpasu_%tagName1%_amd64.AppImage",
+                    "sourceName": "Clash.Nyanpasu_%tagName1%_amd64.AppImage",
                     "saveName": "Clash.Nyanpasu.AppImage"
                 },
                 {
@@ -23,6 +23,7 @@
         {
             "name": "Clash Verge Rev",
             "tagMethod": "github_release",
+            "tagName": "v2.5.10",
             "gitRepo": "clash-verge-rev/clash-verge-rev",
             "savePath": "public/clients/",
             "downloads": [
@@ -31,7 +32,7 @@
                     "saveName": "Clash.Verge.exe"
                 },
                 {
-                    "sourceName": "Clash.Verge_%tagName1%_x64.dmg",
+                    "sourceName": "Clash.Verge_%tagName1%_aarch64.dmg",
                     "saveName": "Clash.Verge.dmg"
                 },
                 {
@@ -47,7 +48,7 @@
             "savePath": "public/clients/",
             "downloads": [
                 {
-                    "sourceName": "cmfa-%tagName1%-meta-universal-release.apk ",
+                    "sourceName": "cmfa-%tagName1%-meta-universal-release.apk",
                     "saveName": "CMFA.apk"
                 }
             ]
@@ -63,15 +64,15 @@
                     "saveName": "SFA.apk"
                 },
                 {
-                    "sourceName": "SFM-%tagName1%-universal.dmg",
-                    "saveName": "SFM.dmg"
+                    "sourceName": "SFM-%tagName1%-Universal.pkg",
+                    "saveName": "SFM.pkg"
                 }
             ]
         },
         {
             "name": "Hiddify",
             "tagMethod": "github_release",
-            "gitRepo": "hiddify/hiddify-next",
+            "gitRepo": "hiddify/hiddify-app",
             "savePath": "public/clients/",
             "downloads": [
                 {
@@ -103,7 +104,7 @@
                     "saveName": "FlClash.exe"
                 },
                 {
-                    "sourceName": "FlClash-%tagName1%-macos-amd64.dmg",
+                    "sourceName": "FlClash-%tagName1%-macos-arm64.dmg",
                     "saveName": "FlClash.dmg"
                 },
                 {
