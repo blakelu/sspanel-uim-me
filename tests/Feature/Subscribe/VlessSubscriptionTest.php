@@ -9,8 +9,10 @@ declare(strict_types=1);
  */
 
 use App\Models\Config;
+use App\Models\Link;
 use App\Models\Node;
 use App\Models\User;
+use App\Services\DB;
 use App\Services\Subscribe;
 
 function vlessSubCreateUser(): User
@@ -237,6 +239,30 @@ describe('VLESS subscription output', function () {
         $this->vlessNodes[] = vlessSubCreateNode($this->vlessGrpc, 'grpc.example.com', vlessSubGrpcTlsConfig());
         $this->vlessNodes[] = vlessSubCreateNode($this->vlessXhttp, 'xhttp.example.com', vlessSubXhttpRealityConfig());
         $this->vlessNodes[] = vlessSubCreateNode($this->vlessVmess, 'vmess.example.com', vlessSubVmessConfig());
+    });
+
+    it('serves a bare subscription URL in the same format as the explicit v2ray URL', function () {
+        $connection = DB::connection();
+        $connection->beginTransaction();
+
+        try {
+            $link = new Link();
+            $link->userid = $this->vlessUser->id;
+            $link->token = bin2hex(random_bytes(8));
+            $link->save();
+
+            $path = '/sub/' . $link->token;
+            $bare = $this->get($path);
+            $v2ray = $this->get($path . '/v2ray');
+            $clash = $this->get($path . '/clash');
+
+            expect($bare->getStatusCode())->toBe(200)
+                ->and($bare->getHeaderLine('Content-Type'))->toBe('text/plain')
+                ->and((string) $bare->getBody())->toContain('vless://')->toBe((string) $v2ray->getBody())
+                ->and($clash->getHeaderLine('Content-Type'))->toBe('application/yaml');
+        } finally {
+            $connection->rollBack();
+        }
     });
 
     it('renders Clash/Mihomo vless proxies', function () {

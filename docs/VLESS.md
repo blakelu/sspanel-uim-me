@@ -126,7 +126,7 @@ Shadowrocket 需更新至支持 XHTTP 及其 Clash 参数解析的版本。
 ## 订阅输出
 
 - Shadowrocket / VLESS URI：`/sub/{token}/vless`
-- V2Ray 混合 URI：`/sub/{token}/v2ray`
+- Shadowrocket / V2Ray 混合 URI：`/sub/{token}/v2ray`。启用 V2Ray 订阅后，无后缀的 `/sub/{token}` 也使用此格式。
 - Clash / Mihomo：`/sub/{token}/clash`
 - Sing-box：`/sub/{token}/singbox`
 - V2Ray JSON：`/sub/{token}/v2rayjson`

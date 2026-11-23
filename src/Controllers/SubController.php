@@ -29,13 +29,13 @@ final class SubController extends BaseController
     public function index($request, $response, $args): ResponseInterface
     {
         $err_msg = '订阅链接无效';
-        $subtype = $args['subtype'];
+        $subtype = $args['subtype'] ?? 'v2ray';
         $subtype_list = [
             'json', 'clash', 'sip008', 'singbox', 'v2rayjson', 'sip002', 'ss', 'v2ray', 'vless', 'trojan', 'hysteria2', 'anytls',
         ];
 
         if (! $_ENV['Subscribe'] ||
-            ! in_array($subtype, $subtype_list) ||
+            ! in_array($subtype, $subtype_list, true) ||
             'https://' . $request->getHeaderLine('Host') !== $_ENV['subUrl']
         ) {
             return ResponseHelper::error($response, $err_msg);
@@ -71,7 +71,7 @@ final class SubController extends BaseController
         . '; expire=' . strtotime($user->class_expire);
         // Clash specific
         $sub_content_disposition = 'attachment; filename=' . $_ENV['appName'];
-        $sub_profile_update_interval = 6;
+        $sub_profile_update_interval = '6';
         $sub_profile_web_page_url = $_ENV['baseUrl'];
 
         if (Config::obtain('subscribe_log')) {

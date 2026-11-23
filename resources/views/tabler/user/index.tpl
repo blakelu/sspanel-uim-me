@@ -179,17 +179,28 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-4">
+                                {if $public_setting['enable_v2_sub']}
                                 <h4 class="mb-3">
-                                    <i class="ti ti-link"></i> 您的专属订阅地址
+                                    <i class="ti ti-link"></i> 小火箭 / V2Ray 订阅
                                 </h4>
                                 <div class="input-group mb-2">
-                                    <input type="text" class="form-control" value="{$UniversalSub}" readonly id="universal-sub-link">
-                                    <button class="btn btn-primary copy" data-clipboard-text="{$UniversalSub}">
+                                    <input type="text" class="form-control" value="{$UniversalSub}/v2ray" readonly
+                                           aria-label="小火箭 / V2Ray 订阅地址">
+                                    <button class="btn btn-primary copy" data-clipboard-text="{$UniversalSub}/v2ray">
                                         <i class="ti ti-copy"></i> 复制
                                     </button>
                                 </div>
+                                {/if}
+                                <div class="btn-list mb-2">
+                                    <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/clash">
+                                        复制 Clash / Mihomo 订阅
+                                    </button>
+                                    <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/singbox">
+                                        复制 Sing-box 订阅
+                                    </button>
+                                </div>
                                 <p class="text-muted mb-0">
-                                    <small>此订阅地址适用于所有客户端，请妥善保管</small>
+                                    <small>请妥善保管订阅地址。</small>
                                 </p>
                             </div>
 
@@ -206,7 +217,7 @@
                                 <button class="btn btn-ghost-primary" type="button" data-bs-toggle="collapse" 
                                         data-bs-target="#all-platforms" aria-expanded="false">
                                     <i class="ti ti-package"></i> 
-                                    查看其他平台客户端
+                                    查看其他客户端和订阅格式
                                     <i class="ti ti-chevron-down ms-1"></i>
                                 </button>
                             </div>
@@ -221,12 +232,6 @@
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/json">
                                             JSON 格式
-                                        </button>
-                                        <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/clash">
-                                            Clash
-                                        </button>
-                                        <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/singbox">
-                                            Sing-box
                                         </button>
                                         <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/vless">
                                             VLESS
@@ -249,11 +254,6 @@
                                         </button>
                                         <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/sip002">
                                             SIP002
-                                        </button>
-                                        {/if}
-                                        {if $public_setting['enable_v2_sub']}
-                                        <button class="btn btn-outline-secondary copy" data-clipboard-text="{$UniversalSub}/v2ray">
-                                            V2Ray
                                         </button>
                                         {/if}
                                         {if $public_setting['enable_trojan_sub']}
