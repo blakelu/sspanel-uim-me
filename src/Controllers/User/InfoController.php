@@ -295,11 +295,20 @@ final class InfoController extends BaseController
     public function updateThemeMode(ServerRequest $request, Response $response, array $args): ResponseInterface
     {
         $theme_mode = (int) $this->antiXss->xss_clean($request->getParam('theme_mode'));
-        $user = $this->user;
 
-        $user->is_dark_mode = in_array($theme_mode, [0, 1, 2]) ? $theme_mode : 0;
+        return $this->saveThemeMode($response, in_array($theme_mode, [0, 1, 2]) ? $theme_mode : 0);
+    }
 
-        if (! $user->save()) {
+    public function switchThemeMode(ServerRequest $request, Response $response, array $args): ResponseInterface
+    {
+        return $this->saveThemeMode($response, $this->user->is_dark_mode ? 0 : 1);
+    }
+
+    private function saveThemeMode(Response $response, int $theme_mode): ResponseInterface
+    {
+        $this->user->is_dark_mode = $theme_mode;
+
+        if (! $this->user->save()) {
             return ResponseHelper::error($response, '切换失败');
         }
 
